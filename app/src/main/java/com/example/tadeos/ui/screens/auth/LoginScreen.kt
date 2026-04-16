@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.tadeos.R
 import com.example.tadeos.ui.theme.InkBrown
@@ -204,7 +205,7 @@ fun LoginScreen(
         }
 
         Row(
-            modifier = Modifier.padding(top = 28.dp),
+            modifier = Modifier.padding(top = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -548,16 +549,97 @@ private fun SocialLoginButton(
             contentColor = InkBrown
         )
     ) {
-        Text(
-            text = text.first().toString(),
-            color = accent,
-            fontWeight = FontWeight.Bold
-        )
+        SocialLogo(text = text, accent = accent)
         Spacer(modifier = Modifier.size(8.dp))
         Text(
             text = text,
             color = InkBrown,
             fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun SocialLogo(
+    text: String,
+    accent: Color
+) {
+    when (text) {
+        "Google" -> GoogleLogoIcon()
+        "Facebook" -> FacebookLogoIcon(accent = accent)
+    }
+}
+
+@Composable
+private fun GoogleLogoIcon() {
+    Canvas(modifier = Modifier.size(20.dp)) {
+        val stroke = Stroke(
+            width = 2.8.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+        val arcSize = Size(size.width * 0.78f, size.height * 0.78f)
+        val arcOffset = Offset(size.width * 0.11f, size.height * 0.11f)
+
+        drawArc(
+            color = Color(0xFFEA4335),
+            startAngle = 205f,
+            sweepAngle = 95f,
+            useCenter = false,
+            topLeft = arcOffset,
+            size = arcSize,
+            style = stroke
+        )
+        drawArc(
+            color = Color(0xFFFBBC05),
+            startAngle = 145f,
+            sweepAngle = 65f,
+            useCenter = false,
+            topLeft = arcOffset,
+            size = arcSize,
+            style = stroke
+        )
+        drawArc(
+            color = Color(0xFF34A853),
+            startAngle = 60f,
+            sweepAngle = 88f,
+            useCenter = false,
+            topLeft = arcOffset,
+            size = arcSize,
+            style = stroke
+        )
+        drawArc(
+            color = Color(0xFF4285F4),
+            startAngle = 300f,
+            sweepAngle = 120f,
+            useCenter = false,
+            topLeft = arcOffset,
+            size = arcSize,
+            style = stroke
+        )
+        drawLine(
+            color = Color(0xFF4285F4),
+            start = Offset(size.width * 0.52f, size.height * 0.50f),
+            end = Offset(size.width * 0.90f, size.height * 0.50f),
+            strokeWidth = 2.8.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+private fun FacebookLogoIcon(accent: Color) {
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(accent),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "f",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
