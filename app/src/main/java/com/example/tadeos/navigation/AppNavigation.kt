@@ -37,37 +37,49 @@ fun AppNavigation() {
             HomeScreen(
                 onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
                 onHealthClick = { navController.navigate(AppRoutes.Health.route) },
-                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) },
+                onNewPetClick = { navController.navigate(AppRoutes.NewPet.route) }
             )
         }
         composable(AppRoutes.PetsList.route) {
             PetsListScreen(
                 onPetDetailClick = { navController.navigate(AppRoutes.PetDetail.route) },
                 onNewPetClick = { navController.navigate(AppRoutes.NewPet.route) },
-                onBackHomeClick = { navController.navigate(AppRoutes.Home.route) }
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onHealthClick = { navController.navigate(AppRoutes.Health.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
         composable(AppRoutes.PetDetail.route) {
             PetDetailScreen(
                 onHealthClick = { navController.navigate(AppRoutes.Health.route) },
-                onBackToPetsClick = { navController.popBackStack() }
+                onBackToPetsClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
         composable(AppRoutes.NewPet.route) {
             NewPetScreen(
                 onSaveClick = { navController.navigate(AppRoutes.PetsList.route) },
-                onCancelClick = { navController.popBackStack() }
+                onCancelClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.Health.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
         composable(AppRoutes.Health.route) {
             HealthScreen(
                 onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
                 onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
         composable(AppRoutes.Profile.route) {
             ProfileScreen(
                 onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.Health.route) },
                 onLogoutClick = { navController.navigate(AppRoutes.Login.route) }
             )
         }
