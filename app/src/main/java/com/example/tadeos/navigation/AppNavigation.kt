@@ -8,6 +8,7 @@ import com.example.tadeos.ui.screens.auth.LoginScreen
 import com.example.tadeos.ui.screens.auth.RegisterScreen
 import com.example.tadeos.ui.screens.health.HealthScreen
 import com.example.tadeos.ui.screens.home.HomeScreen
+import com.example.tadeos.ui.screens.legal.TermsAndConditionsScreen
 import com.example.tadeos.ui.screens.pets.NewPetScreen
 import com.example.tadeos.ui.screens.pets.PetDetailScreen
 import com.example.tadeos.ui.screens.pets.PetsListScreen
@@ -30,7 +31,13 @@ fun AppNavigation() {
         composable(AppRoutes.Register.route) {
             RegisterScreen(
                 onRegisterClick = { navController.navigate(AppRoutes.Home.route) },
-                onBackToLoginClick = { navController.popBackStack() }
+                onBackToLoginClick = { navController.popBackStack() },
+                onTermsClick = { navController.navigate(AppRoutes.TermsAndConditions.route) }
+            )
+        }
+        composable(AppRoutes.TermsAndConditions.route) {
+            TermsAndConditionsScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
         composable(AppRoutes.Home.route) {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,15 +51,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.tadeos.R
 import com.example.tadeos.ui.theme.InkBrown
@@ -74,7 +72,8 @@ private val RegisterDividerColor = Color(0xFFE9E0D8)
 @Composable
 fun RegisterScreen(
     onRegisterClick: () -> Unit,
-    onBackToLoginClick: () -> Unit
+    onBackToLoginClick: () -> Unit,
+    onTermsClick: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -241,22 +240,26 @@ fun RegisterScreen(
             }
         }
 
-        Text(
-            text = buildAnnotatedString {
-                append("Al registrarte, aceptas nuestros ")
-                withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
-                    append("Términos de Servicio")
-                }
-                append(" y ")
-                withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
-                    append("Política de Privacidad")
-                }
-            },
+        Column(
             modifier = Modifier.padding(horizontal = 12.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MutedBrown,
-            textAlign = TextAlign.Center
-        )
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Al registrarte, aceptas nuestros",
+                style = MaterialTheme.typography.bodySmall,
+                color = MutedBrown,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Términos y Condiciones",
+                modifier = Modifier.clickable(onClick = onTermsClick),
+                style = MaterialTheme.typography.bodySmall,
+                color = TerracottaClay,
+                fontWeight = FontWeight.Bold,
+                textDecoration = TextDecoration.Underline,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 

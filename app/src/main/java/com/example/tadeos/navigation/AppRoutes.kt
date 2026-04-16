@@ -9,4 +9,5 @@ sealed class AppRoutes(val route: String) {
     data object NewPet : AppRoutes("new_pet")
     data object Health : AppRoutes("health")
     data object Profile : AppRoutes("profile")
+    data object TermsAndConditions : AppRoutes("terms_conditions")
 }
