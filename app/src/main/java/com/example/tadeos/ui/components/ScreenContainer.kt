@@ -53,6 +53,8 @@ fun ScreenContainer(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    showHeader: Boolean = true,
+    containerColor: Color? = null,
     selectedRoute: String? = null,
     onHomeClick: () -> Unit = {},
     onPetsClick: () -> Unit = {},
@@ -62,6 +64,7 @@ fun ScreenContainer(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = containerColor ?: MaterialTheme.colorScheme.background,
         bottomBar = {
             if (selectedRoute != null) {
                 TadeosBottomBar(
@@ -82,26 +85,28 @@ fun ScreenContainer(
                 .padding(horizontal = 22.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            Text(
-                text = "Tadeo's",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.tertiary,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (subtitle != null) {
+            if (showHeader) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Tadeo's",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontWeight = FontWeight.Bold
                 )
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             content()
@@ -270,6 +275,7 @@ private fun TadeosBottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(72.dp)
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             .background(Color.White)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
