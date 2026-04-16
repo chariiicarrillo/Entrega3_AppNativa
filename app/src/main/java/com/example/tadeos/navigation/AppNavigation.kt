@@ -4,13 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.tadeos.screens.HealthScreen
-import com.example.tadeos.screens.HomeScreen
-import com.example.tadeos.screens.LoginScreen
-import com.example.tadeos.screens.PetDetailScreen
-import com.example.tadeos.screens.PetsListScreen
-import com.example.tadeos.screens.ProfileScreen
-import com.example.tadeos.screens.RegisterScreen
+import com.example.tadeos.ui.screens.auth.LoginScreen
+import com.example.tadeos.ui.screens.auth.RegisterScreen
+import com.example.tadeos.ui.screens.health.HealthScreen
+import com.example.tadeos.ui.screens.home.HomeScreen
+import com.example.tadeos.ui.screens.pets.NewPetScreen
+import com.example.tadeos.ui.screens.pets.PetDetailScreen
+import com.example.tadeos.ui.screens.pets.PetsListScreen
+import com.example.tadeos.ui.screens.profile.ProfileScreen
 
 @Composable
 fun AppNavigation() {
@@ -21,26 +22,54 @@ fun AppNavigation() {
         startDestination = AppRoutes.Login.route
     ) {
         composable(AppRoutes.Login.route) {
-            LoginScreen()
+            LoginScreen(
+                onLoginClick = { navController.navigate(AppRoutes.Home.route) },
+                onRegisterClick = { navController.navigate(AppRoutes.Register.route) }
+            )
         }
         composable(AppRoutes.Register.route) {
-            RegisterScreen()
+            RegisterScreen(
+                onRegisterClick = { navController.navigate(AppRoutes.Home.route) },
+                onBackToLoginClick = { navController.popBackStack() }
+            )
         }
         composable(AppRoutes.Home.route) {
-            HomeScreen()
+            HomeScreen(
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.Health.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
+            )
         }
         composable(AppRoutes.PetsList.route) {
-            PetsListScreen()
+            PetsListScreen(
+                onPetDetailClick = { navController.navigate(AppRoutes.PetDetail.route) },
+                onNewPetClick = { navController.navigate(AppRoutes.NewPet.route) },
+                onBackHomeClick = { navController.navigate(AppRoutes.Home.route) }
+            )
         }
-        composable(AppRoutes.PetDetail.route) { backStackEntry ->
-            val petId = backStackEntry.arguments?.getString("petId") ?: ""
-            PetDetailScreen(petId = petId)
+        composable(AppRoutes.PetDetail.route) {
+            PetDetailScreen(
+                onHealthClick = { navController.navigate(AppRoutes.Health.route) },
+                onBackToPetsClick = { navController.popBackStack() }
+            )
+        }
+        composable(AppRoutes.NewPet.route) {
+            NewPetScreen(
+                onSaveClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onCancelClick = { navController.popBackStack() }
+            )
         }
         composable(AppRoutes.Health.route) {
-            HealthScreen()
+            HealthScreen(
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
+            )
         }
         composable(AppRoutes.Profile.route) {
-            ProfileScreen()
+            ProfileScreen(
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onLogoutClick = { navController.navigate(AppRoutes.Login.route) }
+            )
         }
     }
 }
