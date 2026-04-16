@@ -159,7 +159,7 @@ fun RegisterScreen(
                     value = phone,
                     onValueChange = { phone = it },
                     label = "Teléfono",
-                    placeholder = "+34 000 000 000",
+                    placeholder = "+57 300 000 0000",
                     leadingIcon = { PhoneFieldIcon() },
                     keyboardType = KeyboardType.Phone
                 )

@@ -39,7 +39,7 @@ fun ProfileScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             InfoRow(label = "Correo", value = "alejandro.garcia@example.com")
-            InfoRow(label = "Telefono", value = "+34 612 345 678")
+            InfoRow(label = "Telefono", value = "+57 310 345 6748")
         }
 
         SectionTitle(text = "Preferencias")
