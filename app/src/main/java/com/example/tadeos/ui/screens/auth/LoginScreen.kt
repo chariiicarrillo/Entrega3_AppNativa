@@ -1,6 +1,6 @@
 package com.example.tadeos.ui.screens.auth
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,20 +35,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.tadeos.R
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MorningCream
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
 import com.example.tadeos.ui.theme.TerracottaClay
-import com.example.tadeos.ui.theme.WarmCopper
 
 @Composable
 fun LoginScreen(
@@ -212,14 +212,14 @@ private fun LoginPetAvatar() {
             .padding(bottom = 8.dp),
         contentAlignment = Alignment.BottomEnd
     ) {
-        Canvas(
+        Image(
+            painter = painterResource(id = R.drawable.logo_tadeos),
+            contentDescription = "Logo de Tadeo",
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(74.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF4A2A18))
-        ) {
-            drawPetPortrait()
-        }
+        )
 
         // Indicador decorativo inspirado en el distintivo verde del wireframe.
         Box(
@@ -238,18 +238,6 @@ private fun LoginPetAvatar() {
             )
         }
     }
-}
-
-private fun DrawScope.drawPetPortrait() {
-    val center = Offset(size.width / 2f, size.height / 2f)
-    drawCircle(color = Color(0xFF80502B), radius = size.minDimension * 0.5f, center = center)
-    drawCircle(color = Color(0xFF241611), radius = size.minDimension * 0.34f, center = center.copy(y = center.y * 0.9f))
-    drawCircle(color = Color(0xFF130D0B), radius = size.minDimension * 0.18f, center = Offset(center.x - 16f, center.y - 12f))
-    drawCircle(color = Color(0xFF130D0B), radius = size.minDimension * 0.18f, center = Offset(center.x + 16f, center.y - 12f))
-    drawCircle(color = Color.White, radius = 3f, center = Offset(center.x - 9f, center.y - 6f))
-    drawCircle(color = Color.White, radius = 3f, center = Offset(center.x + 9f, center.y - 6f))
-    drawCircle(color = Color(0xFF1D1410), radius = 6f, center = Offset(center.x, center.y + 8f))
-    drawCircle(color = WarmCopper, radius = 8f, center = Offset(center.x, center.y + 24f))
 }
 
 @Composable
