@@ -66,3 +66,25 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
+
+// Android Studio puede conservar temporalmente la ruta clasica app/build para
+// instalar la app. Como el build real vive fuera de OneDrive, borramos cualquier
+// APK vieja antes de compilar y copiamos la nueva al final del build debug.
+val legacyDebugApk = layout.projectDirectory.file("build/outputs/apk/debug/app-debug.apk")
+
+val deleteLegacyDebugApk by tasks.registering(Delete::class) {
+    delete(legacyDebugApk)
+}
+
+val mirrorDebugApkToLegacyBuild by tasks.registering(Copy::class) {
+    from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+    into(layout.projectDirectory.dir("build/outputs/apk/debug"))
+}
+
+tasks.matching { it.name == "preDebugBuild" }.configureEach {
+    dependsOn(deleteLegacyDebugApk)
+}
+
+tasks.matching { it.name == "assembleDebug" }.configureEach {
+    finalizedBy(mirrorDebugApkToLegacyBuild)
+}
