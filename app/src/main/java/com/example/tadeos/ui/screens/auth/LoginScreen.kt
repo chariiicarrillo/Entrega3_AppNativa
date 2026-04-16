@@ -1,8 +1,8 @@
 package com.example.tadeos.ui.screens.auth
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -37,14 +38,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.tadeos.R
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
@@ -61,6 +71,7 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -118,7 +129,7 @@ fun LoginScreen(
                     value = email,
                     onValueChange = { email = it },
                     label = "Email",
-                    leadingText = "@",
+                    leadingIcon = { EmailFieldIcon() },
                     placeholder = "ejemplo@correo.com"
                 )
 
@@ -127,11 +138,14 @@ fun LoginScreen(
                 AuthTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = "Contrasena",
-                    leadingText = "#",
-                    trailingText = "Ver",
-                    placeholder = "********",
-                    isPassword = true
+                    label = "Contraseña",
+                    leadingIcon = { LockFieldIcon() },
+                    placeholder = "••••••••",
+                    isPassword = true,
+                    passwordVisible = passwordVisible,
+                    onPasswordVisibilityToggle = {
+                        passwordVisible = !passwordVisible
+                    }
                 )
 
                 TextButton(
@@ -141,7 +155,7 @@ fun LoginScreen(
                         .padding(top = 8.dp)
                 ) {
                     Text(
-                        text = "Olvidaste tu contrasena?",
+                        text = "¿Olvidaste tu contraseña?",
                         color = MutedSage,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -283,11 +297,12 @@ private fun AuthTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    leadingText: String,
+    leadingIcon: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "",
-    trailingText: String? = null,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    passwordVisible: Boolean = false,
+    onPasswordVisibilityToggle: () -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -303,21 +318,18 @@ private fun AuthTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            leadingIcon = {
-                Text(
-                    text = leadingText,
-                    color = MutedBrown,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            trailingIcon = {
-                if (trailingText != null) {
-                    Text(
-                        text = trailingText,
-                        color = MutedBrown,
-                        style = MaterialTheme.typography.labelMedium
-                    )
+            leadingIcon = leadingIcon,
+            trailingIcon = if (isPassword && value.isNotEmpty()) {
+                {
+                    IconButton(
+                        onClick = onPasswordVisibilityToggle,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        PasswordVisibilityIcon(isVisible = passwordVisible)
+                    }
                 }
+            } else {
+                null
             },
             placeholder = {
                 if (placeholder.isNotBlank()) {
@@ -329,7 +341,7 @@ private fun AuthTextField(
             },
             singleLine = true,
             shape = RoundedCornerShape(8.dp),
-            visualTransformation = if (isPassword) {
+            visualTransformation = if (isPassword && !passwordVisible) {
                 PasswordVisualTransformation()
             } else {
                 VisualTransformation.None
@@ -345,6 +357,152 @@ private fun AuthTextField(
                 unfocusedTextColor = InkBrown
             )
         )
+    }
+}
+
+@Composable
+private fun EmailFieldIcon() {
+    Canvas(
+        modifier = Modifier
+            .size(24.dp)
+            .semantics { contentDescription = "Icono de email" }
+    ) {
+        val stroke = Stroke(
+            width = 2.2.dp.toPx(),
+            cap = StrokeCap.Square,
+            join = StrokeJoin.Miter
+        )
+        val iconColor = MutedBrown
+
+        drawRoundRect(
+            color = iconColor,
+            topLeft = Offset(size.width * 0.14f, size.height * 0.27f),
+            size = Size(size.width * 0.72f, size.height * 0.48f),
+            cornerRadius = CornerRadius(1.4.dp.toPx(), 1.4.dp.toPx()),
+            style = stroke
+        )
+        drawLine(
+            color = iconColor,
+            start = Offset(size.width * 0.16f, size.height * 0.31f),
+            end = Offset(size.width * 0.50f, size.height * 0.53f),
+            strokeWidth = 2.2.dp.toPx()
+        )
+        drawLine(
+            color = iconColor,
+            start = Offset(size.width * 0.84f, size.height * 0.31f),
+            end = Offset(size.width * 0.50f, size.height * 0.53f),
+            strokeWidth = 2.2.dp.toPx()
+        )
+    }
+}
+
+@Composable
+private fun LockFieldIcon() {
+    Canvas(
+        modifier = Modifier
+            .size(24.dp)
+            .semantics { contentDescription = "Icono de contraseña" }
+    ) {
+        val stroke = Stroke(
+            width = 2.2.dp.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+        val iconColor = MutedBrown
+        val shackle = Path().apply {
+            moveTo(size.width * 0.34f, size.height * 0.45f)
+            lineTo(size.width * 0.34f, size.height * 0.35f)
+            cubicTo(
+                size.width * 0.34f,
+                size.height * 0.18f,
+                size.width * 0.66f,
+                size.height * 0.18f,
+                size.width * 0.66f,
+                size.height * 0.35f
+            )
+            lineTo(size.width * 0.66f, size.height * 0.45f)
+        }
+
+        drawPath(
+            path = shackle,
+            color = iconColor,
+            style = stroke
+        )
+        drawRoundRect(
+            color = iconColor,
+            topLeft = Offset(size.width * 0.25f, size.height * 0.43f),
+            size = Size(size.width * 0.50f, size.height * 0.42f),
+            cornerRadius = CornerRadius(1.5.dp.toPx(), 1.5.dp.toPx()),
+            style = stroke
+        )
+        drawCircle(
+            color = iconColor,
+            radius = size.minDimension * 0.045f,
+            center = Offset(size.width * 0.50f, size.height * 0.63f)
+        )
+    }
+}
+
+@Composable
+private fun PasswordVisibilityIcon(isVisible: Boolean) {
+    Canvas(
+        modifier = Modifier
+            .size(24.dp)
+            .semantics {
+                contentDescription = if (isVisible) {
+                    "Ocultar contraseña"
+                } else {
+                    "Mostrar contraseña"
+                }
+            }
+    ) {
+        val stroke = Stroke(
+            width = 2.dp.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+        val iconColor = MutedBrown
+        val eye = Path().apply {
+            moveTo(size.width * 0.12f, size.height * 0.50f)
+            cubicTo(
+                size.width * 0.30f,
+                size.height * 0.28f,
+                size.width * 0.70f,
+                size.height * 0.28f,
+                size.width * 0.88f,
+                size.height * 0.50f
+            )
+            cubicTo(
+                size.width * 0.70f,
+                size.height * 0.72f,
+                size.width * 0.30f,
+                size.height * 0.72f,
+                size.width * 0.12f,
+                size.height * 0.50f
+            )
+        }
+
+        drawPath(
+            path = eye,
+            color = iconColor,
+            style = stroke
+        )
+        drawCircle(
+            color = iconColor,
+            radius = size.minDimension * 0.13f,
+            center = Offset(size.width * 0.50f, size.height * 0.50f),
+            style = stroke
+        )
+
+        if (!isVisible) {
+            drawLine(
+                color = iconColor,
+                start = Offset(size.width * 0.24f, size.height * 0.22f),
+                end = Offset(size.width * 0.78f, size.height * 0.80f),
+                strokeWidth = 2.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+        }
     }
 }
 
