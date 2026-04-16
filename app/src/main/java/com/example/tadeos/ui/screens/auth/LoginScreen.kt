@@ -1,8 +1,9 @@
 package com.example.tadeos.ui.screens.auth
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,10 +47,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.tadeos.R
 import com.example.tadeos.ui.theme.InkBrown
-import com.example.tadeos.ui.theme.MorningCream
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
 import com.example.tadeos.ui.theme.TerracottaClay
+
+private val LoginBackground = Color(0xFFFBF4EA)
+private val LoginCardBorder = Color(0xFFF3EAE0)
 
 @Composable
 fun LoginScreen(
@@ -62,7 +65,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MorningCream)
+            .background(LoginBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -86,9 +89,10 @@ fun LoginScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(32.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            border = BorderStroke(1.dp, LoginCardBorder)
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 28.dp, vertical = 30.dp),
@@ -228,7 +232,7 @@ private fun LoginPetAvatar() {
                 .size(36.dp)
                 .offset(x = 2.dp, y = (-6).dp)
                 .clip(CircleShape)
-                .background(MorningCream)
+                .background(LoginBackground)
                 .padding(5.dp),
             contentAlignment = Alignment.Center
         ) {
