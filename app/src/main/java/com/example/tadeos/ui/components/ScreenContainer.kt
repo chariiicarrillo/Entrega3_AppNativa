@@ -55,6 +55,7 @@ fun ScreenContainer(
     subtitle: String? = null,
     showHeader: Boolean = true,
     containerColor: Color? = null,
+    horizontalPadding: Int = 22,
     selectedRoute: String? = null,
     onHomeClick: () -> Unit = {},
     onPetsClick: () -> Unit = {},
@@ -82,7 +83,7 @@ fun ScreenContainer(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 22.dp, vertical = 24.dp),
+                .padding(horizontal = horizontalPadding.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             if (showHeader) {
