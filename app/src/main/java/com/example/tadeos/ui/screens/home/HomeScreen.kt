@@ -94,7 +94,7 @@ fun HomeScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Tu refugio digital para el cuidado de tus compañeros favoritos.",
+                text = "Tu refugio digital para el cuidado de tus compa\u00f1eros favoritos.",
                 modifier = Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MutedSage,
@@ -205,7 +205,7 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "¿nueva mascota en\ncasa?",
+                text = "\u00bfNueva mascota en\ncasa?",
                 style = MaterialTheme.typography.titleLarge,
                 color = MutedSage,
                 fontWeight = FontWeight.Bold,
@@ -294,7 +294,7 @@ private fun PetMenuCard(
             }
 
             Text(
-                text = "${pet.age.replace("anos", "años")} • ${pet.weight}",
+                text = "${pet.age.replace("anos", "a\u00f1os")} \u2022 ${pet.weight}",
                 modifier = Modifier.padding(top = 6.dp),
                 style = MaterialTheme.typography.bodySmall,
                 color = InkBrown
@@ -457,7 +457,7 @@ private fun NextAppointmentCard() {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
             CalendarIcon(color = TerracottaClay)
             Text(
-                text = "PRÓXIMA CITA",
+                text = "PR\u00d3XIMA CITA",
                 modifier = Modifier.padding(top = 10.dp),
                 style = MaterialTheme.typography.labelSmall,
                 color = MutedBrown
