@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -12,12 +11,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.tadeos.ui.components.PrimaryAction
 import com.example.tadeos.ui.components.ScreenContainer
 import com.example.tadeos.ui.components.SecondaryAction
+import com.example.tadeos.ui.components.SocialAction
 import com.example.tadeos.ui.components.TadeosCard
+import com.example.tadeos.ui.components.TadeosTextField
 
 @Composable
 fun RegisterScreen(
@@ -35,45 +35,35 @@ fun RegisterScreen(
         subtitle = "Unete a nuestra comunidad de duenos responsables."
     ) {
         TadeosCard {
-            OutlinedTextField(
+            TadeosTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(text = "Nombre completo") },
-                placeholder = { Text(text = "Ej. Ana Garcia") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                label = "Nombre completo",
+                placeholder = "Ej. Ana Garcia"
             )
-            OutlinedTextField(
+            TadeosTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text(text = "Email") },
-                placeholder = { Text(text = "hola@ejemplo.com") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                label = "Email",
+                placeholder = "hola@ejemplo.com"
             )
-            OutlinedTextField(
+            TadeosTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text(text = "Telefono") },
-                placeholder = { Text(text = "+34 000 000 000") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                label = "Telefono",
+                placeholder = "+34 000 000 000"
             )
-            OutlinedTextField(
+            TadeosTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(text = "Contrasena") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                label = "Contrasena",
+                isPassword = true
             )
-            OutlinedTextField(
+            TadeosTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text(text = "Confirmar contrasena") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                label = "Confirmar contrasena",
+                isPassword = true
             )
 
             PrimaryAction(
@@ -92,12 +82,12 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            SecondaryAction(
+            SocialAction(
                 text = "Google",
                 onClick = {},
                 modifier = Modifier.weight(1f)
             )
-            SecondaryAction(
+            SocialAction(
                 text = "Facebook",
                 onClick = {},
                 modifier = Modifier.weight(1f)

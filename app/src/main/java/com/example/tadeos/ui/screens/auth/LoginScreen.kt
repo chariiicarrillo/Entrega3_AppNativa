@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -14,12 +13,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.tadeos.ui.components.PrimaryAction
 import com.example.tadeos.ui.components.ScreenContainer
 import com.example.tadeos.ui.components.SecondaryAction
+import com.example.tadeos.ui.components.SocialAction
 import com.example.tadeos.ui.components.TadeosCard
+import com.example.tadeos.ui.components.TadeosTextField
 
 @Composable
 fun LoginScreen(
@@ -45,22 +45,18 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            OutlinedTextField(
+            TadeosTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text(text = "Email") },
-                placeholder = { Text(text = "ejemplo@correo.com") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                label = "Email",
+                placeholder = "ejemplo@correo.com"
             )
-            OutlinedTextField(
+            TadeosTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(text = "Contrasena") },
-                placeholder = { Text(text = "********") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                label = "Contrasena",
+                placeholder = "********",
+                isPassword = true
             )
 
             TextButton(
@@ -86,12 +82,12 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            SecondaryAction(
+            SocialAction(
                 text = "Google",
                 onClick = {},
                 modifier = Modifier.weight(1f)
             )
-            SecondaryAction(
+            SocialAction(
                 text = "Facebook",
                 onClick = {},
                 modifier = Modifier.weight(1f)
