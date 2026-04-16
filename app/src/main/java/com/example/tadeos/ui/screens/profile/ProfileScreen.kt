@@ -61,6 +61,6 @@ fun ProfileScreen(
         }
 
         PrimaryAction(text = "Guardar cambios", onClick = onHomeClick)
-        SecondaryAction(text = "Cerrar sesion", onClick = onLogoutClick)
+        SecondaryAction(text = "Cerrar sesión", onClick = onLogoutClick)
     }
 }

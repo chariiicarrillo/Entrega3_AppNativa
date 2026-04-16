@@ -95,7 +95,7 @@ fun RegisterScreen(
         }
 
         SecondaryAction(
-            text = "Ya tienes una cuenta? Inicia sesion",
+            text = "Ya tienes una cuenta? Inicia sesión",
             onClick = onBackToLoginClick
         )
 

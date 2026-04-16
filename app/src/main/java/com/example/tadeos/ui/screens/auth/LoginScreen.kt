@@ -54,7 +54,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.tadeos.R
 import com.example.tadeos.ui.theme.InkBrown
@@ -174,7 +173,7 @@ fun LoginScreen(
                     )
                 ) {
                     Text(
-                        text = "Iniciar Sesion",
+                        text = "Iniciar Sesión",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -192,12 +191,10 @@ fun LoginScreen(
                 ) {
                     SocialLoginButton(
                         text = "Google",
-                        accent = Color(0xFF4285F4),
                         modifier = Modifier.weight(1f)
                     )
                     SocialLoginButton(
                         text = "Facebook",
-                        accent = Color(0xFF1877F2),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -537,7 +534,6 @@ private fun DividerText() {
 @Composable
 private fun SocialLoginButton(
     text: String,
-    accent: Color,
     modifier: Modifier = Modifier
 ) {
     OutlinedButton(
@@ -549,7 +545,7 @@ private fun SocialLoginButton(
             contentColor = InkBrown
         )
     ) {
-        SocialLogo(text = text, accent = accent)
+        SocialLogo(text = text)
         Spacer(modifier = Modifier.size(8.dp))
         Text(
             text = text,
@@ -560,86 +556,16 @@ private fun SocialLoginButton(
 }
 
 @Composable
-private fun SocialLogo(
-    text: String,
-    accent: Color
-) {
-    when (text) {
-        "Google" -> GoogleLogoIcon()
-        "Facebook" -> FacebookLogoIcon(accent = accent)
+private fun SocialLogo(text: String) {
+    val icon = when (text) {
+        "Google" -> R.drawable.ic_google_logo
+        "Facebook" -> R.drawable.ic_facebook_logo
+        else -> return
     }
-}
 
-@Composable
-private fun GoogleLogoIcon() {
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val stroke = Stroke(
-            width = 2.8.dp.toPx(),
-            cap = StrokeCap.Round
-        )
-        val arcSize = Size(size.width * 0.78f, size.height * 0.78f)
-        val arcOffset = Offset(size.width * 0.11f, size.height * 0.11f)
-
-        drawArc(
-            color = Color(0xFFEA4335),
-            startAngle = 205f,
-            sweepAngle = 95f,
-            useCenter = false,
-            topLeft = arcOffset,
-            size = arcSize,
-            style = stroke
-        )
-        drawArc(
-            color = Color(0xFFFBBC05),
-            startAngle = 145f,
-            sweepAngle = 65f,
-            useCenter = false,
-            topLeft = arcOffset,
-            size = arcSize,
-            style = stroke
-        )
-        drawArc(
-            color = Color(0xFF34A853),
-            startAngle = 60f,
-            sweepAngle = 88f,
-            useCenter = false,
-            topLeft = arcOffset,
-            size = arcSize,
-            style = stroke
-        )
-        drawArc(
-            color = Color(0xFF4285F4),
-            startAngle = 300f,
-            sweepAngle = 120f,
-            useCenter = false,
-            topLeft = arcOffset,
-            size = arcSize,
-            style = stroke
-        )
-        drawLine(
-            color = Color(0xFF4285F4),
-            start = Offset(size.width * 0.52f, size.height * 0.50f),
-            end = Offset(size.width * 0.90f, size.height * 0.50f),
-            strokeWidth = 2.8.dp.toPx(),
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-private fun FacebookLogoIcon(accent: Color) {
-    Box(
-        modifier = Modifier
-            .size(20.dp)
-            .clip(CircleShape)
-            .background(accent),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "f",
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
+    Image(
+        painter = painterResource(id = icon),
+        contentDescription = "Logo de $text",
+        modifier = Modifier.size(18.dp)
+    )
 }
