@@ -2,6 +2,7 @@ package com.example.tadeos.ui.screens.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -208,7 +209,7 @@ fun LoginScreen(
 private fun LoginPetAvatar() {
     Box(
         modifier = Modifier
-            .size(82.dp)
+            .size(96.dp)
             .padding(bottom = 8.dp),
         contentAlignment = Alignment.BottomEnd
     ) {
@@ -217,26 +218,59 @@ private fun LoginPetAvatar() {
             contentDescription = "Logo de Tadeo",
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(74.dp)
+                .size(84.dp)
                 .clip(CircleShape)
         )
 
-        // Indicador decorativo inspirado en el distintivo verde del wireframe.
+        // Insignia con huella inspirada en el distintivo del wireframe.
         Box(
             modifier = Modifier
-                .size(22.dp)
-                .offset(x = 2.dp, y = (-4).dp)
+                .size(36.dp)
+                .offset(x = 2.dp, y = (-6).dp)
                 .clip(CircleShape)
-                .background(MutedSage),
+                .background(MorningCream)
+                .padding(5.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "+",
-                color = Color.White,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold
-            )
+            PawBadge()
         }
+    }
+}
+
+@Composable
+private fun PawBadge() {
+    Canvas(
+        modifier = Modifier
+            .size(26.dp)
+            .clip(CircleShape)
+            .background(MutedSage)
+    ) {
+        val white = Color.White
+        drawCircle(
+            color = white,
+            radius = size.minDimension * 0.18f,
+            center = androidx.compose.ui.geometry.Offset(size.width * 0.50f, size.height * 0.62f)
+        )
+        drawCircle(
+            color = white,
+            radius = size.minDimension * 0.10f,
+            center = androidx.compose.ui.geometry.Offset(size.width * 0.32f, size.height * 0.38f)
+        )
+        drawCircle(
+            color = white,
+            radius = size.minDimension * 0.10f,
+            center = androidx.compose.ui.geometry.Offset(size.width * 0.45f, size.height * 0.28f)
+        )
+        drawCircle(
+            color = white,
+            radius = size.minDimension * 0.10f,
+            center = androidx.compose.ui.geometry.Offset(size.width * 0.58f, size.height * 0.28f)
+        )
+        drawCircle(
+            color = white,
+            radius = size.minDimension * 0.10f,
+            center = androidx.compose.ui.geometry.Offset(size.width * 0.70f, size.height * 0.38f)
+        )
     }
 }
 
