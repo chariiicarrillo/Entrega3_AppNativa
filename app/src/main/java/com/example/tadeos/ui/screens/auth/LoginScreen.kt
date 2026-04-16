@@ -1,9 +1,12 @@
 package com.example.tadeos.ui.screens.auth
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,10 +15,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 import com.example.tadeos.ui.components.PrimaryAction
 import com.example.tadeos.ui.components.ScreenContainer
 import com.example.tadeos.ui.components.SecondaryAction
-import com.example.tadeos.ui.components.SpacerSmall
 import com.example.tadeos.ui.components.TadeosCard
 
 @Composable
@@ -46,6 +49,7 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text(text = "Email") },
+                placeholder = { Text(text = "ejemplo@correo.com") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -53,22 +57,24 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text(text = "Contrasena") },
+                placeholder = { Text(text = "********") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation()
             )
 
+            TextButton(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Olvidaste tu contrasena?")
+            }
+
             PrimaryAction(
                 text = "Iniciar sesion",
                 onClick = onLoginClick
             )
-            SecondaryAction(
-                text = "Crear cuenta",
-                onClick = onRegisterClick
-            )
         }
-
-        SpacerSmall()
 
         Text(
             text = "O continua con",
@@ -76,9 +82,25 @@ fun LoginScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SecondaryAction(
+                text = "Google",
+                onClick = {},
+                modifier = Modifier.weight(1f)
+            )
+            SecondaryAction(
+                text = "Facebook",
+                onClick = {},
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         SecondaryAction(
-            text = "Google",
-            onClick = {}
+            text = "No tienes cuenta? Registrate",
+            onClick = onRegisterClick
         )
     }
 }
