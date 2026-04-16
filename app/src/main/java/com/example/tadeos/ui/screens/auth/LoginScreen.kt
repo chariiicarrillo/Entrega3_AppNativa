@@ -55,8 +55,8 @@ fun LoginScreen(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
-    var email by remember { mutableStateOf("ejemplo@correo.com") }
-    var password by remember { mutableStateOf("password") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -113,7 +113,8 @@ fun LoginScreen(
                     value = email,
                     onValueChange = { email = it },
                     label = "Email",
-                    leadingText = "@"
+                    leadingText = "@",
+                    placeholder = "ejemplo@correo.com"
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -124,6 +125,7 @@ fun LoginScreen(
                     label = "Contrasena",
                     leadingText = "#",
                     trailingText = "Ver",
+                    placeholder = "********",
                     isPassword = true
                 )
 
@@ -257,6 +259,7 @@ private fun AuthTextField(
     label: String,
     leadingText: String,
     modifier: Modifier = Modifier,
+    placeholder: String = "",
     trailingText: String? = null,
     isPassword: Boolean = false
 ) {
@@ -287,6 +290,14 @@ private fun AuthTextField(
                         text = trailingText,
                         color = MutedBrown,
                         style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            },
+            placeholder = {
+                if (placeholder.isNotBlank()) {
+                    Text(
+                        text = placeholder,
+                        color = MutedBrown
                     )
                 }
             },
