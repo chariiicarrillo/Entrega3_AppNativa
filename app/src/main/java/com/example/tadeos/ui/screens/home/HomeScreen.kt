@@ -76,7 +76,9 @@ fun HomeScreen(
         onPetsClick = onPetsClick,
         onHealthClick = onHealthClick,
         onProfileClick = onProfileClick,
-        containerColor = MenuBackground
+        containerColor = MenuBackground,
+        horizontalPadding = 26,
+        verticalPadding = 18
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -128,7 +130,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(18.dp))
 
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(22.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 items(pets) { pet ->
                     PetMenuCard(
@@ -222,8 +224,8 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
             Button(
                 onClick = onNewPetClick,
                 modifier = Modifier
-                    .width(198.dp)
-                    .height(50.dp),
+                    .width(190.dp)
+                    .height(48.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = TerracottaClay,
@@ -248,7 +250,7 @@ private fun PetMenuCard(
     onHealthClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.width(232.dp),
+        modifier = Modifier.width(226.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MenuSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -258,19 +260,12 @@ private fun PetMenuCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(156.dp)
+                    .height(150.dp)
                     .clip(RoundedCornerShape(18.dp))
                     .background(if (pet.name == "Luna") Color(0xFFE8DFDB) else MenuImageTint),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_tadeos),
-                    contentDescription = "Foto de ${pet.name}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(156.dp)
-                )
+                PetPhoto(name = pet.name)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -359,15 +354,107 @@ private fun PetActionButton(
 }
 
 @Composable
+private fun PetPhoto(name: String) {
+    if (name == "Luna") {
+        LunaPhoto()
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+                .background(MenuImageTint),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_tadeos),
+                contentDescription = "Foto de $name",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun LunaPhoto() {
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .background(Color(0xFFE8DFDB))
+    ) {
+        drawRect(color = Color(0xFFE8DFDB))
+        drawRoundRect(
+            color = Color(0xFFF2ECE9),
+            topLeft = Offset(size.width * 0.02f, size.height * 0.08f),
+            size = Size(size.width * 0.96f, size.height * 0.84f),
+            cornerRadius = CornerRadius(18.dp.toPx(), 18.dp.toPx())
+        )
+        drawOval(
+            color = Color(0xFFEEE5DF),
+            topLeft = Offset(size.width * 0.17f, size.height * 0.22f),
+            size = Size(size.width * 0.66f, size.height * 0.56f)
+        )
+        drawOval(
+            color = Color(0xFF4D3730),
+            topLeft = Offset(size.width * 0.33f, size.height * 0.20f),
+            size = Size(size.width * 0.34f, size.height * 0.36f)
+        )
+        drawPath(
+            path = Path().apply {
+                moveTo(size.width * 0.36f, size.height * 0.28f)
+                lineTo(size.width * 0.28f, size.height * 0.10f)
+                lineTo(size.width * 0.47f, size.height * 0.22f)
+                close()
+                moveTo(size.width * 0.64f, size.height * 0.28f)
+                lineTo(size.width * 0.72f, size.height * 0.10f)
+                lineTo(size.width * 0.53f, size.height * 0.22f)
+                close()
+            },
+            color = Color(0xFF4D3730)
+        )
+        drawCircle(
+            color = Color(0xFFB8E8FF),
+            radius = size.minDimension * 0.045f,
+            center = Offset(size.width * 0.43f, size.height * 0.38f)
+        )
+        drawCircle(
+            color = Color(0xFFB8E8FF),
+            radius = size.minDimension * 0.045f,
+            center = Offset(size.width * 0.57f, size.height * 0.38f)
+        )
+        drawCircle(
+            color = Color(0xFF1B2328),
+            radius = size.minDimension * 0.018f,
+            center = Offset(size.width * 0.43f, size.height * 0.38f)
+        )
+        drawCircle(
+            color = Color(0xFF1B2328),
+            radius = size.minDimension * 0.018f,
+            center = Offset(size.width * 0.57f, size.height * 0.38f)
+        )
+        drawCircle(
+            color = Color(0xFF2D211B),
+            radius = size.minDimension * 0.026f,
+            center = Offset(size.width * 0.50f, size.height * 0.47f)
+        )
+    }
+}
+
+@Composable
 private fun NextAppointmentCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(116.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MenuSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MenuCardBorder)
     ) {
-        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
             CalendarIcon(color = TerracottaClay)
             Text(
                 text = "PRÓXIMA CITA",
