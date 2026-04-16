@@ -67,9 +67,14 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
-// Android Studio puede conservar temporalmente la ruta clasica app/build para
-// instalar la app. Como el build real vive fuera de OneDrive, borramos cualquier
-// APK vieja antes de compilar y copiamos la nueva al final del build debug.
+// Android Studio puede conservar salidas incrementales antiguas cuando el
+// proyecto vive en OneDrive. Para que Run "app" no vuelva a instalar pantallas
+// viejas, cada build debug empieza borrando las salidas anteriores del modulo.
+val purgeDebugBuildCache by tasks.registering(Delete::class) {
+    delete(layout.buildDirectory)
+}
+
+// Tambien limpiamos la ruta clasica app/build por si Android Studio la revisa.
 val legacyDebugApk = layout.projectDirectory.file("build/outputs/apk/debug/app-debug.apk")
 
 val deleteLegacyDebugApk by tasks.registering(Delete::class) {
@@ -82,7 +87,11 @@ val mirrorDebugApkToLegacyBuild by tasks.registering(Copy::class) {
 }
 
 tasks.matching { it.name == "preDebugBuild" }.configureEach {
-    dependsOn(deleteLegacyDebugApk)
+    dependsOn(purgeDebugBuildCache, deleteLegacyDebugApk)
+}
+
+tasks.matching { it.name == "packageDebug" }.configureEach {
+    finalizedBy(mirrorDebugApkToLegacyBuild)
 }
 
 tasks.matching { it.name == "assembleDebug" }.configureEach {
