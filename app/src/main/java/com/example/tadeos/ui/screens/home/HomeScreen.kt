@@ -42,6 +42,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.tadeos.R
 import com.example.tadeos.data.mock.MockPets
 import com.example.tadeos.data.model.Pet
@@ -58,6 +59,7 @@ private val MenuHeroGreen = Color(0xFFDCECCF)
 private val MenuCardBorder = Color(0xFFF1E8DE)
 private val MenuSurface = Color.White
 private val MenuImageTint = Color(0xFF161820)
+private val PetPhotoHeight = 128.dp
 
 @Composable
 fun HomeScreen(
@@ -85,27 +87,29 @@ fun HomeScreen(
         ) {
             HomeTopBar(onProfileClick = onProfileClick)
 
-            Spacer(modifier = Modifier.height(34.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
                 text = "Bienvenido Usuario",
-                style = MaterialTheme.typography.headlineMedium,
+                fontSize = 26.sp,
+                lineHeight = 32.sp,
                 color = InkBrown,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "Tu refugio digital para el cuidado de tus compa\u00f1eros favoritos.",
                 modifier = Modifier.padding(top = 8.dp),
-                style = MaterialTheme.typography.bodyLarge,
+                fontSize = 16.sp,
+                lineHeight = 24.sp,
                 color = MutedSage,
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(26.dp))
 
             NewPetHeroCard(onNewPetClick = onNewPetClick)
 
-            Spacer(modifier = Modifier.height(42.dp))
+            Spacer(modifier = Modifier.height(34.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -143,6 +147,8 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(28.dp))
 
             NextAppointmentCard()
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -162,13 +168,14 @@ private fun rememberMenuPets(): List<Pet> {
 
 @Composable
 private fun HomeTopBar(onProfileClick: () -> Unit) {
-    Row(
+    Box(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
     ) {
+        // El logo queda centrado y la campana se conserva como accion lateral.
         Row(
-            modifier = Modifier.clickable(onClick = onProfileClick),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .clickable(onClick = onProfileClick),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -188,7 +195,10 @@ private fun HomeTopBar(onProfileClick: () -> Unit) {
             )
         }
 
-        BellIcon(color = TerracottaClay)
+        BellIcon(
+            color = TerracottaClay,
+            modifier = Modifier.align(Alignment.CenterEnd)
+        )
     }
 }
 
@@ -201,12 +211,13 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 34.dp, vertical = 34.dp),
+            modifier = Modifier.padding(horizontal = 34.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "\u00bfNueva mascota en\ncasa?",
-                style = MaterialTheme.typography.titleLarge,
+                fontSize = 21.sp,
+                lineHeight = 27.sp,
                 color = MutedSage,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -214,18 +225,19 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
             Text(
                 text = "Registra a tu nuevo amigo para\nempezar a llevar su control de\nsalud y bienestar.",
                 modifier = Modifier.padding(top = 14.dp),
-                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
                 color = MutedSage,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(26.dp))
+            Spacer(modifier = Modifier.height(22.dp))
 
             Button(
                 onClick = onNewPetClick,
                 modifier = Modifier
                     .width(190.dp)
-                    .height(48.dp),
+                    .height(46.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = TerracottaClay,
@@ -250,17 +262,17 @@ private fun PetMenuCard(
     onHealthClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.width(226.dp),
+        modifier = Modifier.width(218.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MenuSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MenuCardBorder)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(PetPhotoHeight)
                     .clip(RoundedCornerShape(18.dp))
                     .background(if (pet.name == "Luna") Color(0xFFE8DFDB) else MenuImageTint),
                 contentAlignment = Alignment.Center
@@ -268,7 +280,7 @@ private fun PetMenuCard(
                 PetPhoto(name = pet.name)
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -277,7 +289,8 @@ private fun PetMenuCard(
             ) {
                 Text(
                     text = pet.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 18.sp,
+                    lineHeight = 22.sp,
                     color = InkBrown,
                     fontWeight = FontWeight.Bold
                 )
@@ -296,11 +309,12 @@ private fun PetMenuCard(
             Text(
                 text = "${pet.age.replace("anos", "a\u00f1os")} \u2022 ${pet.weight}",
                 modifier = Modifier.padding(top = 6.dp),
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
                 color = InkBrown
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -332,7 +346,7 @@ private fun PetActionButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(52.dp),
+        modifier = modifier.height(46.dp),
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFFEDE9E3),
@@ -345,7 +359,8 @@ private fun PetActionButton(
             icon()
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelSmall,
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
                 color = InkBrown,
                 fontWeight = FontWeight.Bold
             )
@@ -361,7 +376,7 @@ private fun PetPhoto(name: String) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp)
+                .height(PetPhotoHeight)
                 .background(MenuImageTint),
             contentAlignment = Alignment.Center
         ) {
@@ -371,7 +386,7 @@ private fun PetPhoto(name: String) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(PetPhotoHeight)
             )
         }
     }
@@ -382,7 +397,7 @@ private fun LunaPhoto() {
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
+            .height(PetPhotoHeight)
             .background(Color(0xFFE8DFDB))
     ) {
         drawRect(color = Color(0xFFE8DFDB))
@@ -448,37 +463,41 @@ private fun NextAppointmentCard() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(116.dp),
+            .height(132.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MenuSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MenuCardBorder)
     ) {
-        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             CalendarIcon(color = TerracottaClay)
             Text(
                 text = "PR\u00d3XIMA CITA",
-                modifier = Modifier.padding(top = 10.dp),
-                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(top = 8.dp),
+                fontSize = 11.sp,
+                lineHeight = 14.sp,
                 color = MutedBrown
             )
             Text(
                 text = "Luna",
                 modifier = Modifier.padding(top = 2.dp),
-                style = MaterialTheme.typography.bodyLarge,
+                fontSize = 15.sp,
+                lineHeight = 18.sp,
                 color = TerracottaClay,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "15 de Octubre",
                 modifier = Modifier.padding(top = 2.dp),
-                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 13.sp,
+                lineHeight = 16.sp,
                 color = InkBrown,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "Vet. San Francisco",
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 11.sp,
+                lineHeight = 14.sp,
                 color = MutedBrown
             )
         }
@@ -486,8 +505,11 @@ private fun NextAppointmentCard() {
 }
 
 @Composable
-private fun BellIcon(color: Color) {
-    Canvas(modifier = Modifier.size(24.dp)) {
+private fun BellIcon(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.size(24.dp)) {
         val stroke = Stroke(
             width = 1.8.dp.toPx(),
             cap = StrokeCap.Round,
