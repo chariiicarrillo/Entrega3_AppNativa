@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -77,14 +76,10 @@ fun HomeScreen(
         onPetsClick = onPetsClick,
         onHealthClick = onHealthClick,
         onProfileClick = onProfileClick,
-        containerColor = MenuBackground,
-        horizontalPadding = 0
+        containerColor = MenuBackground
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxWidth()
         ) {
             HomeTopBar(onProfileClick = onProfileClick)
 
@@ -92,16 +87,13 @@ fun HomeScreen(
 
             Text(
                 text = "Bienvenido Usuario",
-                modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.headlineMedium,
                 color = InkBrown,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "Tu refugio digital para el cuidado de tus compañeros favoritos.",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
+                modifier = Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MutedSage,
                 fontWeight = FontWeight.Medium
@@ -136,7 +128,6 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(18.dp))
 
             LazyRow(
-                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(22.dp)
             ) {
                 items(pets) { pet ->
@@ -208,9 +199,7 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 30.dp, vertical = 34.dp),
+            modifier = Modifier.padding(horizontal = 34.dp, vertical = 34.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -222,9 +211,7 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
             )
             Text(
                 text = "Registra a tu nuevo amigo para\nempezar a llevar su control de\nsalud y bienestar.",
-                modifier = Modifier
-                    .widthIn(max = 230.dp)
-                    .padding(top = 14.dp),
+                modifier = Modifier.padding(top = 14.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MutedSage,
                 textAlign = TextAlign.Center
