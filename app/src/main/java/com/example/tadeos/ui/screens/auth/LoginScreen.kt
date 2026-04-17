@@ -76,6 +76,16 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val auth = remember { FirebaseAuth.getInstance() }
+    val socialAuthActions = rememberSocialAuthActions(
+        onAuthSuccess = onLoginClick,
+        onError = { message -> errorMessage = message },
+        onLoadingChange = { loading ->
+            isLoading = loading
+            if (loading) {
+                errorMessage = null
+            }
+        }
+    )
 
     Column(
         modifier = Modifier
@@ -229,10 +239,14 @@ fun LoginScreen(
                 ) {
                     SocialLoginButton(
                         text = "Google",
+                        onClick = socialAuthActions.signInWithGoogle,
+                        enabled = !isLoading,
                         modifier = Modifier.weight(1f)
                     )
                     SocialLoginButton(
                         text = "Facebook",
+                        onClick = socialAuthActions.signInWithFacebook,
+                        enabled = !isLoading,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -606,10 +620,13 @@ private fun DividerText() {
 @Composable
 private fun SocialLoginButton(
     text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     OutlinedButton(
-        onClick = {},
+        onClick = onClick,
+        enabled = enabled,
         modifier = modifier.height(44.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.outlinedButtonColors(

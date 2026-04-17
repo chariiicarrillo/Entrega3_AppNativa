@@ -57,6 +57,37 @@ object TadeosFirebaseRepository {
             }
     }
 
+    fun saveCurrentProviderProfile(
+        onComplete: (Boolean, String?) -> Unit
+    ) {
+        val user = auth.currentUser
+        if (user == null) {
+            onComplete(false, "No pudimos obtener el usuario autenticado.")
+            return
+        }
+
+        val userData = mutableMapOf<String, Any>(
+            "uid" to user.uid,
+            "email" to user.email.orEmpty(),
+            "updatedAt" to FieldValue.serverTimestamp()
+        )
+
+        if (!user.displayName.isNullOrBlank()) {
+            userData["name"] = user.displayName.orEmpty()
+        }
+
+        user.photoUrl?.let { photoUri ->
+            userData["photoUrl"] = photoUri.toString()
+        }
+
+        userDocument(user.uid)
+            .set(userData, SetOptions.merge())
+            .addOnSuccessListener { onComplete(true, null) }
+            .addOnFailureListener { exception ->
+                onComplete(false, friendlyFirebaseMessage(exception))
+            }
+    }
+
     fun observeUserProfile(
         onChange: (UserProfile?, String?) -> Unit
     ): ListenerRegistration? {

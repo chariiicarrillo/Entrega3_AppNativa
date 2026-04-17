@@ -86,6 +86,16 @@ fun RegisterScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val auth = remember { FirebaseAuth.getInstance() }
+    val socialAuthActions = rememberSocialAuthActions(
+        onAuthSuccess = onRegisterClick,
+        onError = { message -> errorMessage = message },
+        onLoadingChange = { loading ->
+            isLoading = loading
+            if (loading) {
+                errorMessage = null
+            }
+        }
+    )
 
     Column(
         modifier = Modifier
@@ -285,10 +295,14 @@ fun RegisterScreen(
                 ) {
                     RegisterSocialButton(
                         text = "Google",
+                        onClick = socialAuthActions.signInWithGoogle,
+                        enabled = !isLoading,
                         modifier = Modifier.weight(1f)
                     )
                     RegisterSocialButton(
                         text = "Facebook",
+                        onClick = socialAuthActions.signInWithFacebook,
+                        enabled = !isLoading,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -776,10 +790,13 @@ private fun RegisterDividerText() {
 @Composable
 private fun RegisterSocialButton(
     text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     OutlinedButton(
-        onClick = {},
+        onClick = onClick,
+        enabled = enabled,
         modifier = modifier.height(44.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.outlinedButtonColors(

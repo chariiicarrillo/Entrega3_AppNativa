@@ -1,8 +1,33 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
 }
+
+val localProperties = Properties().apply {
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use(::load)
+    }
+}
+
+fun localOrGradleProperty(name: String, fallback: String): String {
+    return localProperties.getProperty(name)
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+        ?: providers.gradleProperty(name).orNull
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+        ?: fallback
+}
+
+val facebookAppId = localOrGradleProperty("FACEBOOK_APP_ID", "000000000000000")
+val facebookClientToken = localOrGradleProperty(
+    name = "FACEBOOK_CLIENT_TOKEN",
+    fallback = "REEMPLAZA_FACEBOOK_CLIENT_TOKEN"
+)
 
 android {
     namespace = "com.example.tadeos"
@@ -20,6 +45,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        resValue("string", "facebook_app_id", facebookAppId)
+        resValue("string", "facebook_client_token", facebookClientToken)
+        resValue("string", "fb_login_protocol_scheme", "fb$facebookAppId")
     }
 
     buildTypes {
@@ -39,6 +68,7 @@ android {
 
     buildFeatures {
         compose = true
+        resValues = true
     }
 }
 
@@ -67,6 +97,10 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.facebook.login)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
