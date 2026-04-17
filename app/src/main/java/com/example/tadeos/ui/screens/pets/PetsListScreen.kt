@@ -34,7 +34,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -63,8 +62,6 @@ private val PetsSearchSurface = Color(0xFFEDE9E3)
 private val PetsChipGreen = Color(0xFFE5EFD9)
 private val PetsSoftPink = Color(0xFFFFD5CC)
 private val PetsDash = Color(0xFFE9B9A7)
-private val PetsPhotoGreen = Color(0xFFDCE8CF)
-private val PetsPhotoStone = Color(0xFFE5E0D8)
 
 @Composable
 fun PetsListScreen(
@@ -258,7 +255,7 @@ private fun PetFamilyCard(
                 name = pet.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(132.dp)
+                    .height(150.dp)
                     .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             )
 
@@ -477,212 +474,19 @@ private fun PetPhoto(
     name: String,
     modifier: Modifier = Modifier
 ) {
-    when (name) {
-        "Luna" -> LunaPhoto(modifier = modifier)
-        "Cooper" -> CooperPhoto(modifier = modifier)
-        else -> OttoPhoto(modifier = modifier)
-    }
+    Image(
+        painter = painterResource(id = name.petPhotoRes()),
+        contentDescription = "Foto de $name",
+        contentScale = ContentScale.Crop,
+        modifier = modifier
+    )
 }
 
-@Composable
-private fun OttoPhoto(modifier: Modifier) {
-    Canvas(modifier = modifier.background(PetsPhotoStone)) {
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(Color(0xFFC9D9B8), Color(0xFFF0E5DA))
-            )
-        )
-        drawOval(
-            color = Color(0xFF797065),
-            topLeft = Offset(size.width * -0.08f, size.height * 0.38f),
-            size = Size(size.width * 1.18f, size.height * 0.55f)
-        )
-        drawCircle(
-            color = Color(0xFFB06C3B),
-            radius = size.minDimension * 0.19f,
-            center = Offset(size.width * 0.48f, size.height * 0.55f)
-        )
-        drawRoundRect(
-            color = Color(0xFFC9834C),
-            topLeft = Offset(size.width * 0.18f, size.height * 0.55f),
-            size = Size(size.width * 0.58f, size.height * 0.18f),
-            cornerRadius = CornerRadius(40.dp.toPx(), 40.dp.toPx())
-        )
-        drawRoundRect(
-            color = Color(0xFFC9834C),
-            topLeft = Offset(size.width * 0.35f, size.height * 0.67f),
-            size = Size(size.width * 0.46f, size.height * 0.08f),
-            cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx())
-        )
-        drawCircle(
-            color = Color(0xFF8C4F2F),
-            radius = size.minDimension * 0.05f,
-            center = Offset(size.width * 0.42f, size.height * 0.53f)
-        )
-        drawCircle(
-            color = Color(0xFF1F1915),
-            radius = size.minDimension * 0.018f,
-            center = Offset(size.width * 0.41f, size.height * 0.52f)
-        )
-        drawCircle(
-            color = Color(0xFF1F1915),
-            radius = size.minDimension * 0.018f,
-            center = Offset(size.width * 0.55f, size.height * 0.52f)
-        )
-        drawCircle(
-            color = Color(0xFF2E2018),
-            radius = size.minDimension * 0.028f,
-            center = Offset(size.width * 0.49f, size.height * 0.58f)
-        )
-        drawPath(
-            path = Path().apply {
-                moveTo(size.width * 0.33f, size.height * 0.43f)
-                lineTo(size.width * 0.22f, size.height * 0.36f)
-                lineTo(size.width * 0.31f, size.height * 0.55f)
-                close()
-                moveTo(size.width * 0.63f, size.height * 0.43f)
-                lineTo(size.width * 0.75f, size.height * 0.36f)
-                lineTo(size.width * 0.64f, size.height * 0.55f)
-                close()
-            },
-            color = Color(0xFF8D5332)
-        )
-        drawRect(
-            color = Color(0xFF71B1C5),
-            topLeft = Offset(size.width * 0.34f, size.height * 0.68f),
-            size = Size(size.width * 0.28f, size.height * 0.04f)
-        )
-    }
-}
-
-@Composable
-private fun LunaPhoto(modifier: Modifier) {
-    Canvas(modifier = modifier.background(Color(0xFFE8DFDB))) {
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(Color(0xFFEADDD8), Color(0xFFF7F0EB))
-            )
-        )
-        drawRoundRect(
-            color = Color(0xFFF1E6E0),
-            topLeft = Offset(size.width * 0.04f, size.height * 0.12f),
-            size = Size(size.width * 0.92f, size.height * 0.76f),
-            cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx())
-        )
-        drawOval(
-            color = Color(0xFF7B625C),
-            topLeft = Offset(size.width * 0.18f, size.height * 0.28f),
-            size = Size(size.width * 0.64f, size.height * 0.48f)
-        )
-        drawOval(
-            color = Color(0xFF4C3731),
-            topLeft = Offset(size.width * 0.33f, size.height * 0.24f),
-            size = Size(size.width * 0.34f, size.height * 0.33f)
-        )
-        drawPath(
-            path = Path().apply {
-                moveTo(size.width * 0.36f, size.height * 0.30f)
-                lineTo(size.width * 0.28f, size.height * 0.12f)
-                lineTo(size.width * 0.48f, size.height * 0.24f)
-                close()
-                moveTo(size.width * 0.64f, size.height * 0.30f)
-                lineTo(size.width * 0.72f, size.height * 0.12f)
-                lineTo(size.width * 0.52f, size.height * 0.24f)
-                close()
-            },
-            color = Color(0xFF4C3731)
-        )
-        drawCircle(
-            color = Color(0xFFBEE9FF),
-            radius = size.minDimension * 0.044f,
-            center = Offset(size.width * 0.43f, size.height * 0.39f)
-        )
-        drawCircle(
-            color = Color(0xFFBEE9FF),
-            radius = size.minDimension * 0.044f,
-            center = Offset(size.width * 0.57f, size.height * 0.39f)
-        )
-        drawCircle(
-            color = Color(0xFF14242C),
-            radius = size.minDimension * 0.016f,
-            center = Offset(size.width * 0.43f, size.height * 0.39f)
-        )
-        drawCircle(
-            color = Color(0xFF14242C),
-            radius = size.minDimension * 0.016f,
-            center = Offset(size.width * 0.57f, size.height * 0.39f)
-        )
-        drawCircle(
-            color = InkBrown,
-            radius = size.minDimension * 0.024f,
-            center = Offset(size.width * 0.50f, size.height * 0.48f)
-        )
-    }
-}
-
-@Composable
-private fun CooperPhoto(modifier: Modifier) {
-    Canvas(modifier = modifier.background(PetsPhotoGreen)) {
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(Color(0xFFAFCB99), Color(0xFFDFE8D1))
-            )
-        )
-        drawCircle(
-            color = Color(0xFF79A76D),
-            radius = size.minDimension * 0.28f,
-            center = Offset(size.width * 0.15f, size.height * 0.08f)
-        )
-        drawCircle(
-            color = Color(0xFF8AB078),
-            radius = size.minDimension * 0.25f,
-            center = Offset(size.width * 0.88f, size.height * 0.12f)
-        )
-        drawRoundRect(
-            color = Color(0xFFC9834C),
-            topLeft = Offset(size.width * 0.23f, size.height * 0.38f),
-            size = Size(size.width * 0.54f, size.height * 0.32f),
-            cornerRadius = CornerRadius(18.dp.toPx(), 18.dp.toPx())
-        )
-        drawOval(
-            color = Color(0xFFF1E1C8),
-            topLeft = Offset(size.width * 0.35f, size.height * 0.28f),
-            size = Size(size.width * 0.30f, size.height * 0.34f)
-        )
-        drawPath(
-            path = Path().apply {
-                moveTo(size.width * 0.37f, size.height * 0.34f)
-                lineTo(size.width * 0.27f, size.height * 0.28f)
-                lineTo(size.width * 0.32f, size.height * 0.54f)
-                close()
-                moveTo(size.width * 0.63f, size.height * 0.34f)
-                lineTo(size.width * 0.73f, size.height * 0.28f)
-                lineTo(size.width * 0.68f, size.height * 0.54f)
-                close()
-            },
-            color = Color(0xFF9C5E38)
-        )
-        drawCircle(
-            color = Color(0xFF1F1915),
-            radius = size.minDimension * 0.016f,
-            center = Offset(size.width * 0.44f, size.height * 0.43f)
-        )
-        drawCircle(
-            color = Color(0xFF1F1915),
-            radius = size.minDimension * 0.016f,
-            center = Offset(size.width * 0.56f, size.height * 0.43f)
-        )
-        drawCircle(
-            color = Color(0xFF3B281F),
-            radius = size.minDimension * 0.026f,
-            center = Offset(size.width * 0.50f, size.height * 0.50f)
-        )
-        drawRoundRect(
-            color = Color(0xFFEEE1CD),
-            topLeft = Offset(size.width * 0.38f, size.height * 0.53f),
-            size = Size(size.width * 0.24f, size.height * 0.10f),
-            cornerRadius = CornerRadius(18.dp.toPx(), 18.dp.toPx())
-        )
+private fun String.petPhotoRes(): Int {
+    return when (this) {
+        "Luna" -> R.drawable.pet_luna
+        "Cooper" -> R.drawable.pet_cooper
+        else -> R.drawable.pet_otto
     }
 }
 
