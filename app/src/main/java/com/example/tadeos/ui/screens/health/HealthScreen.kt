@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -42,6 +41,7 @@ import com.example.tadeos.data.model.Pet
 import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.TadeosBrandHeader
 import com.example.tadeos.ui.components.TadeosPetImage
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
@@ -87,36 +87,37 @@ fun HealthScreen(
         onHealthClick = {},
         onProfileClick = onProfileClick,
         containerColor = HealthBackground,
-        horizontalPadding = 12,
-        verticalPadding = 8
+        horizontalPadding = 18,
+        verticalPadding = 16
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 340.dp)
+                .widthIn(max = 320.dp)
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            HealthTopBar(onBackClick = onPetsClick)
+            TadeosBrandHeader(
+                onBrandClick = onProfileClick,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 28.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
                     text = "Seleccionar\nMascota",
                     color = TerracottaClay,
-                    fontSize = 20.sp,
-                    lineHeight = 20.sp,
+                    fontSize = 29.sp,
+                    lineHeight = 30.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
                     text = "\u00bfPara qui\u00e9n es este registro?",
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 6.dp),
                     color = InkBrown,
-                    fontSize = 11.sp,
-                    lineHeight = 14.sp,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -156,27 +157,6 @@ fun HealthScreen(
                 textAlign = TextAlign.Center
             )
         }
-    }
-}
-
-@Composable
-private fun HealthTopBar(onBackClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(26.dp)
-            .clickable(onClick = onBackClick),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BackIcon(color = TerracottaClay)
-        Text(
-            text = "Tadeo's",
-            modifier = Modifier.padding(start = 6.dp),
-            color = TerracottaClay,
-            fontSize = 13.sp,
-            lineHeight = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
@@ -290,34 +270,6 @@ private fun Pet.displayBreed(): String {
     return when (breed) {
         "Gato calico" -> "Gato Calic\u00f3"
         else -> breed
-    }
-}
-
-@Composable
-private fun BackIcon(color: Color) {
-    Canvas(modifier = Modifier.size(15.dp)) {
-        val strokeWidth = 1.5.dp.toPx()
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.70f, size.height * 0.20f),
-            end = Offset(size.width * 0.30f, size.height * 0.50f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.30f, size.height * 0.50f),
-            end = Offset(size.width * 0.70f, size.height * 0.80f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.32f, size.height * 0.50f),
-            end = Offset(size.width * 0.88f, size.height * 0.50f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
     }
 }
 
