@@ -1,5 +1,10 @@
 package com.example.tadeos.ui.screens.pets
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
@@ -35,11 +41,14 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.example.tadeos.data.model.Pet
 import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
@@ -57,6 +66,8 @@ private val DetailChipGreen = Color(0xFFDDEAD3)
 private val DetailChipGray = Color(0xFFE8E4DE)
 private val DetailIconGreen = Color(0xFFDCEAD5)
 private val DetailDivider = Color(0xFFE4DDD4)
+private val DetailFieldSurface = Color(0xFFEDE9E3)
+private val DetailError = Color(0xFFC3332C)
 
 private data class PetDetailUi(
     val name: String,
@@ -83,6 +94,50 @@ fun PetDetailScreen(
 ) {
     var pet by remember { mutableStateOf<Pet?>(null) }
     var dataMessage by remember { mutableStateOf<String?>(null) }
+    var isEditing by remember { mutableStateOf(false) }
+    var isSaving by remember { mutableStateOf(false) }
+    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var saveMessage by remember { mutableStateOf<String?>(null) }
+    var editName by remember { mutableStateOf("") }
+    var editSpecies by remember { mutableStateOf("Perro") }
+    var editBreed by remember { mutableStateOf("") }
+    var editBirthday by remember { mutableStateOf("") }
+    var editAge by remember { mutableStateOf("") }
+    var editGender by remember { mutableStateOf("Macho") }
+    var editWeight by remember { mutableStateOf("") }
+    var editLastVisit by remember { mutableStateOf("") }
+    var editMood by remember { mutableStateOf("") }
+    var editDiet by remember { mutableStateOf("") }
+    var editVaccines by remember { mutableStateOf("") }
+    var editNextExam by remember { mutableStateOf("") }
+    var editMicrochipId by remember { mutableStateOf("") }
+    var editCoatColor by remember { mutableStateOf("") }
+    var editRecentNote by remember { mutableStateOf("") }
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        selectedPhotoUri = uri
+    }
+
+    fun loadForm(source: Pet) {
+        editName = source.name
+        editSpecies = source.species.toSpeciesOption()
+        editBreed = source.breed
+        editBirthday = source.birthday
+        editAge = source.age
+        editGender = source.gender.ifBlank { "Macho" }
+        editWeight = source.weight
+        editLastVisit = source.lastVisit
+        editMood = source.mood
+        editDiet = source.diet
+        editVaccines = source.vaccines
+        editNextExam = source.nextExam
+        editMicrochipId = source.microchipId
+        editCoatColor = source.coatColor
+        editRecentNote = source.recentNote
+        selectedPhotoUri = null
+        saveMessage = null
+    }
 
     DisposableEffect(petId) {
         val listener = TadeosFirebaseRepository.observePet(petId) { loadedPet, message ->
@@ -114,11 +169,123 @@ fun PetDetailScreen(
                 .align(Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            DetailTopBar(onBackClick = onBackToPetsClick)
             val currentPet = pet
+            DetailTopBar(
+                onBackClick = onBackToPetsClick,
+                canEdit = currentPet != null,
+                isEditing = isEditing,
+                onEditClick = {
+                    currentPet?.let { loadedPet ->
+                        loadForm(loadedPet)
+                        isEditing = true
+                    }
+                },
+                onCancelEdit = {
+                    isEditing = false
+                    selectedPhotoUri = null
+                    saveMessage = null
+                }
+            )
 
             if (currentPet == null) {
                 DetailMessage(text = dataMessage ?: "Cargando mascota...")
+            } else if (isEditing) {
+                PetEditForm(
+                    pet = currentPet,
+                    selectedPhotoUri = selectedPhotoUri,
+                    name = editName,
+                    onNameChange = { editName = it },
+                    species = editSpecies,
+                    onSpeciesChange = { editSpecies = it },
+                    breed = editBreed,
+                    onBreedChange = { editBreed = it },
+                    birthday = editBirthday,
+                    onBirthdayChange = { editBirthday = it },
+                    age = editAge,
+                    onAgeChange = { editAge = it },
+                    gender = editGender,
+                    onGenderChange = { editGender = it },
+                    weight = editWeight,
+                    onWeightChange = { editWeight = it },
+                    lastVisit = editLastVisit,
+                    onLastVisitChange = { editLastVisit = it },
+                    mood = editMood,
+                    onMoodChange = { editMood = it },
+                    diet = editDiet,
+                    onDietChange = { editDiet = it },
+                    vaccines = editVaccines,
+                    onVaccinesChange = { editVaccines = it },
+                    nextExam = editNextExam,
+                    onNextExamChange = { editNextExam = it },
+                    microchipId = editMicrochipId,
+                    onMicrochipIdChange = { editMicrochipId = it },
+                    coatColor = editCoatColor,
+                    onCoatColorChange = { editCoatColor = it },
+                    recentNote = editRecentNote,
+                    onRecentNoteChange = { editRecentNote = it },
+                    isSaving = isSaving,
+                    message = saveMessage,
+                    onPhotoClick = {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onCancelClick = {
+                        isEditing = false
+                        selectedPhotoUri = null
+                        saveMessage = null
+                    },
+                    onSaveClick = {
+                        val validationMessage = validatePetEdition(
+                            name = editName,
+                            breed = editBreed,
+                            age = editAge,
+                            weight = editWeight
+                        )
+
+                        if (validationMessage != null) {
+                            saveMessage = validationMessage
+                            return@PetEditForm
+                        }
+
+                        isSaving = true
+                        saveMessage = null
+
+                        val updatedPet = currentPet.copy(
+                            name = editName.trim(),
+                            species = editSpecies.toStoredSpecies(),
+                            breed = editBreed.trim(),
+                            birthday = editBirthday.trim(),
+                            age = normalizeAge(editAge),
+                            gender = editGender.trim().ifBlank { "Macho" },
+                            weight = normalizeWeight(editWeight),
+                            lastVisit = editLastVisit.trim().ifBlank { "Sin visitas" },
+                            mood = editMood.trim().ifBlank { "Activo" },
+                            diet = editDiet.trim().ifBlank { "Sin definir" },
+                            vaccines = editVaccines.trim().ifBlank { "Pendiente" },
+                            nextExam = editNextExam.trim().ifBlank { "Por programar" },
+                            healthStatus = editVaccines.trim().ifBlank { "Pendiente" },
+                            nextCare = editNextExam.trim().ifBlank { "Por programar" },
+                            microchipId = editMicrochipId.trim().ifBlank { "Sin registrar" },
+                            coatColor = editCoatColor.trim().ifBlank { "Sin registrar" },
+                            recentNote = editRecentNote.trim().ifBlank { "Sin notas recientes." }
+                        )
+
+                        TadeosFirebaseRepository.updatePet(
+                            pet = updatedPet,
+                            imageUri = selectedPhotoUri
+                        ) { success, message ->
+                            isSaving = false
+                            if (success) {
+                                isEditing = false
+                                selectedPhotoUri = null
+                                saveMessage = "Datos actualizados."
+                            } else {
+                                saveMessage = message
+                            }
+                        }
+                    }
+                )
             } else {
                 val petDetail = currentPet.toDetailUi()
                 PetHeroImage(pet = currentPet)
@@ -151,24 +318,101 @@ private fun Pet.toDetailUi(): PetDetailUi {
     )
 }
 
+private fun validatePetEdition(
+    name: String,
+    breed: String,
+    age: String,
+    weight: String
+): String? {
+    return when {
+        name.isBlank() -> "Ingresa el nombre de la mascota."
+        breed.isBlank() -> "Ingresa la raza de la mascota."
+        age.isBlank() -> "Ingresa la edad de la mascota."
+        weight.isBlank() -> "Ingresa el peso de la mascota."
+        else -> null
+    }
+}
+
+private fun normalizeAge(value: String): String {
+    val cleanValue = value.trim()
+    return if (
+        cleanValue.contains("ano", ignoreCase = true) ||
+        cleanValue.contains("a\u00f1o", ignoreCase = true) ||
+        cleanValue.contains("mes", ignoreCase = true)
+    ) {
+        cleanValue
+    } else {
+        "$cleanValue anos"
+    }
+}
+
+private fun normalizeWeight(value: String): String {
+    val cleanValue = value.trim()
+    return if (cleanValue.contains("kg", ignoreCase = true)) {
+        cleanValue
+    } else {
+        "$cleanValue kg"
+    }
+}
+
+private fun String.toSpeciesOption(): String {
+    return if (contains("fel", ignoreCase = true) || contains("gat", ignoreCase = true)) {
+        "Gato"
+    } else {
+        "Perro"
+    }
+}
+
+private fun String.toStoredSpecies(): String {
+    return if (this == "Gato") {
+        "Felino"
+    } else {
+        "Canino"
+    }
+}
+
 @Composable
-private fun DetailTopBar(onBackClick: () -> Unit) {
+private fun DetailTopBar(
+    onBackClick: () -> Unit,
+    canEdit: Boolean,
+    isEditing: Boolean,
+    onEditClick: () -> Unit,
+    onCancelEdit: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(28.dp)
-            .clickable(onClick = onBackClick),
+            .height(28.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BackIcon(color = TerracottaClay)
-        Text(
-            text = "Tadeo's",
-            modifier = Modifier.padding(start = 6.dp),
-            color = TerracottaClay,
-            fontSize = 13.sp,
-            lineHeight = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.clickable(onClick = onBackClick),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BackIcon(color = TerracottaClay)
+            Text(
+                text = "Tadeo's",
+                modifier = Modifier.padding(start = 6.dp),
+                color = TerracottaClay,
+                fontSize = 13.sp,
+                lineHeight = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (canEdit) {
+            Text(
+                text = if (isEditing) "Cancelar" else "Editar",
+                modifier = Modifier.clickable(
+                    onClick = if (isEditing) onCancelEdit else onEditClick
+                ),
+                color = TerracottaClay,
+                fontSize = 12.sp,
+                lineHeight = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -187,6 +431,435 @@ private fun DetailMessage(text: String) {
             fontSize = 12.sp,
             lineHeight = 16.sp,
             textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun PetEditForm(
+    pet: Pet,
+    selectedPhotoUri: Uri?,
+    name: String,
+    onNameChange: (String) -> Unit,
+    species: String,
+    onSpeciesChange: (String) -> Unit,
+    breed: String,
+    onBreedChange: (String) -> Unit,
+    birthday: String,
+    onBirthdayChange: (String) -> Unit,
+    age: String,
+    onAgeChange: (String) -> Unit,
+    gender: String,
+    onGenderChange: (String) -> Unit,
+    weight: String,
+    onWeightChange: (String) -> Unit,
+    lastVisit: String,
+    onLastVisitChange: (String) -> Unit,
+    mood: String,
+    onMoodChange: (String) -> Unit,
+    diet: String,
+    onDietChange: (String) -> Unit,
+    vaccines: String,
+    onVaccinesChange: (String) -> Unit,
+    nextExam: String,
+    onNextExamChange: (String) -> Unit,
+    microchipId: String,
+    onMicrochipIdChange: (String) -> Unit,
+    coatColor: String,
+    onCoatColorChange: (String) -> Unit,
+    recentNote: String,
+    onRecentNoteChange: (String) -> Unit,
+    isSaving: Boolean,
+    message: String?,
+    onPhotoClick: () -> Unit,
+    onCancelClick: () -> Unit,
+    onSaveClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        EditablePetPhoto(
+            pet = pet,
+            selectedPhotoUri = selectedPhotoUri,
+            onClick = onPhotoClick
+        )
+
+        DetailEditField(
+            label = "Nombre",
+            value = name,
+            onValueChange = onNameChange,
+            placeholder = "Ej: Otto"
+        )
+
+        DetailEditSelector(
+            label = "Especie",
+            options = listOf("Perro", "Gato"),
+            selected = species,
+            onSelected = onSpeciesChange
+        )
+
+        DetailEditField(
+            label = "Raza",
+            value = breed,
+            onValueChange = onBreedChange,
+            placeholder = "Ej: Golden Retriever"
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DetailEditField(
+                label = "Cumplea\u00f1os",
+                value = birthday,
+                onValueChange = onBirthdayChange,
+                placeholder = "mm/dd",
+                modifier = Modifier.weight(1f)
+            )
+            DetailEditField(
+                label = "Edad",
+                value = age,
+                onValueChange = onAgeChange,
+                placeholder = "2 anos",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DetailEditField(
+                label = "Sexo",
+                value = gender,
+                onValueChange = onGenderChange,
+                placeholder = "Macho",
+                modifier = Modifier.weight(1f)
+            )
+            DetailEditField(
+                label = "Peso",
+                value = weight,
+                onValueChange = onWeightChange,
+                placeholder = "12.5 kg",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        DetailEditField(
+            label = "Ultima visita",
+            value = lastVisit,
+            onValueChange = onLastVisitChange,
+            placeholder = "12 de octubre"
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DetailEditField(
+                label = "Estado",
+                value = mood,
+                onValueChange = onMoodChange,
+                placeholder = "Activo",
+                modifier = Modifier.weight(1f)
+            )
+            DetailEditField(
+                label = "Dieta",
+                value = diet,
+                onValueChange = onDietChange,
+                placeholder = "Sin cereales",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DetailEditField(
+                label = "Vacunas",
+                value = vaccines,
+                onValueChange = onVaccinesChange,
+                placeholder = "Al dia",
+                modifier = Modifier.weight(1f)
+            )
+            DetailEditField(
+                label = "Proximo examen",
+                value = nextExam,
+                onValueChange = onNextExamChange,
+                placeholder = "En 3 meses",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DetailEditField(
+                label = "Microchip",
+                value = microchipId,
+                onValueChange = onMicrochipIdChange,
+                placeholder = "#98511200345",
+                modifier = Modifier.weight(1f)
+            )
+            DetailEditField(
+                label = "Color",
+                value = coatColor,
+                onValueChange = onCoatColorChange,
+                placeholder = "Dorado/Crema",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        DetailEditField(
+            label = "Notas recientes",
+            value = recentNote,
+            onValueChange = onRecentNoteChange,
+            placeholder = "Escribe una nota breve...",
+            singleLine = false,
+            fieldHeight = 86.dp
+        )
+
+        if (message != null) {
+            Text(
+                text = message,
+                modifier = Modifier.fillMaxWidth(),
+                color = if (message == "Datos actualizados.") MutedSage else DetailError,
+                fontSize = 11.sp,
+                lineHeight = 15.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        DetailPrimaryButton(
+            text = if (isSaving) "Guardando..." else "Guardar cambios",
+            enabled = !isSaving,
+            onClick = onSaveClick
+        )
+
+        DetailSecondaryButton(
+            text = "Cancelar edicion",
+            enabled = !isSaving,
+            onClick = onCancelClick
+        )
+    }
+}
+
+@Composable
+private fun EditablePetPhoto(
+    pet: Pet,
+    selectedPhotoUri: Uri?,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(174.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(DetailFieldSurface),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selectedPhotoUri != null) {
+                AsyncImage(
+                    model = selectedPhotoUri,
+                    contentDescription = "Nueva foto de la mascota",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            } else {
+                TadeosPetImage(
+                    pet = pet,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(TerracottaClay)
+                    .align(Alignment.BottomEnd),
+                contentAlignment = Alignment.Center
+            ) {
+                CameraEditIcon(color = Color.White)
+            }
+        }
+        Text(
+            text = "Cambiar foto",
+            modifier = Modifier.padding(top = 8.dp),
+            color = TerracottaClay,
+            fontSize = 11.sp,
+            lineHeight = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun DetailEditSelector(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        DetailFieldLabel(text = label)
+        Row(
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            options.forEach { option ->
+                DetailEditOption(
+                    text = option,
+                    selected = option == selected,
+                    onClick = { onSelected(option) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailEditOption(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(42.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) DetailBackground else DetailFieldSurface
+        ),
+        border = if (selected) BorderStroke(1.dp, TerracottaClay) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(42.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                color = InkBrown,
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailEditField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true,
+    fieldHeight: androidx.compose.ui.unit.Dp = 42.dp
+) {
+    Column(modifier = modifier) {
+        DetailFieldLabel(text = label)
+        Box(
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .fillMaxWidth()
+                .height(fieldHeight)
+                .clip(RoundedCornerShape(8.dp))
+                .background(DetailFieldSurface)
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = singleLine,
+                textStyle = TextStyle(
+                    color = InkBrown,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (value.isBlank()) {
+                            Text(
+                                text = placeholder,
+                                color = MutedBrown,
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailFieldLabel(text: String) {
+    Text(
+        text = text,
+        color = InkBrown,
+        fontSize = 9.sp,
+        lineHeight = 11.sp,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+@Composable
+private fun DetailPrimaryButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(if (enabled) TerracottaClay else MutedBrown)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 13.sp,
+            lineHeight = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun DetailSecondaryButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.Transparent)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = MutedBrown,
+            fontSize = 12.sp,
+            lineHeight = 15.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -559,6 +1232,51 @@ private fun BackIcon(color: Color) {
             start = Offset(size.width * 0.32f, size.height * 0.50f),
             end = Offset(size.width * 0.88f, size.height * 0.50f),
             strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+private fun CameraEditIcon(color: Color) {
+    Canvas(modifier = Modifier.size(22.dp)) {
+        val stroke = Stroke(
+            width = 1.7.dp.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(size.width * 0.14f, size.height * 0.32f),
+            size = Size(size.width * 0.52f, size.height * 0.42f),
+            cornerRadius = CornerRadius(2.5.dp.toPx(), 2.5.dp.toPx()),
+            style = stroke
+        )
+        drawLine(
+            color = color,
+            start = Offset(size.width * 0.24f, size.height * 0.32f),
+            end = Offset(size.width * 0.34f, size.height * 0.22f),
+            strokeWidth = 1.7.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+        drawCircle(
+            color = color,
+            radius = size.minDimension * 0.10f,
+            center = Offset(size.width * 0.40f, size.height * 0.54f),
+            style = stroke
+        )
+        drawLine(
+            color = color,
+            start = Offset(size.width * 0.78f, size.height * 0.22f),
+            end = Offset(size.width * 0.78f, size.height * 0.48f),
+            strokeWidth = 1.7.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = color,
+            start = Offset(size.width * 0.65f, size.height * 0.35f),
+            end = Offset(size.width * 0.91f, size.height * 0.35f),
+            strokeWidth = 1.7.dp.toPx(),
             cap = StrokeCap.Round
         )
     }
