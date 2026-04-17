@@ -2,7 +2,6 @@ package com.example.tadeos.ui.screens.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,17 +40,15 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.tadeos.R
 import com.example.tadeos.data.model.Pet
 import com.example.tadeos.data.model.UserProfile
 import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
+import com.example.tadeos.ui.components.TadeosBrandHeader
 import com.example.tadeos.ui.components.ScreenContainer
 import com.example.tadeos.ui.components.TadeosPetImage
 import com.example.tadeos.ui.theme.InkBrown
@@ -65,7 +61,6 @@ private val MenuBackground = Color(0xFFFCF7EF)
 private val MenuHeroGreen = Color(0xFFDCECCF)
 private val MenuCardBorder = Color(0xFFF1E8DE)
 private val MenuSurface = Color.White
-private val MenuImageTint = Color(0xFF161820)
 private val PetPhotoHeight = 128.dp
 
 @Composable
@@ -115,7 +110,10 @@ fun HomeScreen(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            HomeTopBar(onProfileClick = onProfileClick)
+            TadeosBrandHeader(
+                onBrandClick = onProfileClick,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(28.dp))
 
@@ -223,44 +221,6 @@ private fun EmptyPetsMessage(
                 fontWeight = FontWeight.Bold
             )
         }
-    }
-}
-
-@Composable
-private fun HomeTopBar(onProfileClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // La marca queda alineada al inicio como en el wireframe del menu.
-        Row(
-            modifier = Modifier
-                .clickable(onClick = onProfileClick),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_tadeos),
-                contentDescription = "Perfil de Tadeo's",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-            )
-            Text(
-                text = "Tadeo's",
-                modifier = Modifier.padding(start = 12.dp),
-                fontSize = 18.sp,
-                lineHeight = 22.sp,
-                color = TerracottaClay,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        BellIcon(
-            color = TerracottaClay,
-            modifier = Modifier.size(30.dp)
-        )
     }
 }
 
@@ -556,48 +516,6 @@ private fun NextAppointmentCard(pet: Pet?) {
                 color = MutedBrown
             )
         }
-    }
-}
-
-@Composable
-private fun BellIcon(
-    color: Color,
-    modifier: Modifier = Modifier.size(24.dp)
-) {
-    Canvas(modifier = modifier) {
-        val stroke = Stroke(
-            width = 1.8.dp.toPx(),
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round
-        )
-        val bell = Path().apply {
-            moveTo(size.width * 0.34f, size.height * 0.68f)
-            lineTo(size.width * 0.66f, size.height * 0.68f)
-            lineTo(size.width * 0.62f, size.height * 0.39f)
-            cubicTo(
-                size.width * 0.60f,
-                size.height * 0.25f,
-                size.width * 0.40f,
-                size.height * 0.25f,
-                size.width * 0.38f,
-                size.height * 0.39f
-            )
-            close()
-        }
-
-        drawPath(path = bell, color = color, style = stroke)
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.30f, size.height * 0.68f),
-            end = Offset(size.width * 0.70f, size.height * 0.68f),
-            strokeWidth = 1.8.dp.toPx(),
-            cap = StrokeCap.Round
-        )
-        drawCircle(
-            color = color,
-            radius = size.minDimension * 0.045f,
-            center = Offset(size.width * 0.50f, size.height * 0.76f)
-        )
     }
 }
 

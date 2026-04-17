@@ -1,7 +1,6 @@
 package com.example.tadeos.ui.screens.pets
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,18 +40,16 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.tadeos.R
 import com.example.tadeos.data.model.Pet
 import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.TadeosBrandHeader
 import com.example.tadeos.ui.components.TadeosPetImage
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
@@ -120,7 +117,10 @@ fun PetsListScreen(
                 .align(Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            PetsTopBar(onProfileClick = onProfileClick)
+            TadeosBrandHeader(
+                onBrandClick = onProfileClick,
+                modifier = Modifier.fillMaxWidth()
+            )
             PetsHeader(totalPets = pets.size)
             PetSearchBar(
                 value = search,
@@ -144,42 +144,6 @@ fun PetsListScreen(
             NewPetFamilyCard(onClick = onNewPetClick)
             Spacer(modifier = Modifier.height(4.dp))
         }
-    }
-}
-
-@Composable
-private fun PetsTopBar(onProfileClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            modifier = Modifier.clickable(onClick = onProfileClick),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_tadeos),
-                contentDescription = "Logo de Tadeo's",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape)
-            )
-            Text(
-                text = "Tadeo's",
-                modifier = Modifier.padding(start = 8.dp),
-                color = TerracottaClay,
-                fontSize = 13.sp,
-                lineHeight = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        BellIcon(
-            color = TerracottaClay,
-            modifier = Modifier.size(22.dp)
-        )
     }
 }
 
@@ -546,41 +510,6 @@ private fun Pet.shortDescription(): String {
         else -> breed
     }
     return "$displayAge \u2022 $displayBreed"
-}
-
-@Composable
-private fun BellIcon(
-    color: Color,
-    modifier: Modifier = Modifier.size(22.dp)
-) {
-    Canvas(modifier = modifier) {
-        val stroke = Stroke(
-            width = 1.6.dp.toPx(),
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round
-        )
-        val bell = Path().apply {
-            moveTo(size.width * 0.34f, size.height * 0.68f)
-            lineTo(size.width * 0.66f, size.height * 0.68f)
-            lineTo(size.width * 0.62f, size.height * 0.39f)
-            cubicTo(size.width * 0.60f, size.height * 0.25f, size.width * 0.40f, size.height * 0.25f, size.width * 0.38f, size.height * 0.39f)
-            close()
-        }
-
-        drawPath(path = bell, color = color, style = stroke)
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.30f, size.height * 0.68f),
-            end = Offset(size.width * 0.70f, size.height * 0.68f),
-            strokeWidth = 1.6.dp.toPx(),
-            cap = StrokeCap.Round
-        )
-        drawCircle(
-            color = color,
-            radius = size.minDimension * 0.04f,
-            center = Offset(size.width * 0.50f, size.height * 0.76f)
-        )
-    }
 }
 
 @Composable
