@@ -184,6 +184,11 @@ object SocialAuthRepository {
             rawMessage.contains("disabled", ignoreCase = true) -> {
                 "Esta cuenta esta deshabilitada."
             }
+            rawMessage.contains("credential", ignoreCase = true) ||
+                rawMessage.contains("malformed", ignoreCase = true) ||
+                rawMessage.contains("expired", ignoreCase = true) -> {
+                "No pudimos validar la cuenta de $providerName. Intenta iniciar sesion de nuevo."
+            }
             rawMessage.isNotBlank() -> rawMessage
             else -> "No pudimos iniciar sesion con $providerName."
         }

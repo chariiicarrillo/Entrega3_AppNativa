@@ -2,6 +2,7 @@ package com.example.tadeos.ui.screens.profile
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,7 +62,7 @@ fun ProfileScreen(
     var isDirty by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }
     val photoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         selectedPhotoUri = uri
         if (uri != null) {
@@ -106,7 +107,11 @@ fun ProfileScreen(
                 modifier = Modifier
                     .size(108.dp)
                     .clip(CircleShape)
-                    .clickable { photoPicker.launch("image/*") }
+                    .clickable {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
             )
             Box(
                 modifier = Modifier
@@ -114,7 +119,11 @@ fun ProfileScreen(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondary)
                     .align(Alignment.BottomCenter)
-                    .clickable { photoPicker.launch("image/*") },
+                    .clickable {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

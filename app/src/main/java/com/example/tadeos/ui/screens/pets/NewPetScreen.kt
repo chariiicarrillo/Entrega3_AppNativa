@@ -2,6 +2,7 @@ package com.example.tadeos.ui.screens.pets
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -17,12 +18,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil3.compose.AsyncImage
 import com.example.tadeos.data.model.Pet
 import com.example.tadeos.data.repository.TadeosFirebaseRepository
@@ -58,6 +62,21 @@ private val NewPetBackground = Color(0xFFFCF7EF)
 private val NewPetFieldSurface = Color(0xFFEDE9E3)
 private val NewPetUploadSurface = Color(0xFFE7E1DC)
 private val NewPetPhotoMark = Color(0xFFD4C8BF)
+private val BirthdayMonths = listOf(
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre"
+)
+private val BirthdayMonthDays = listOf(31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
 @Composable
 fun NewPetScreen(
@@ -76,10 +95,11 @@ fun NewPetScreen(
     var sex by remember { mutableStateOf("Macho") }
     var weight by remember { mutableStateOf("") }
     var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var showBirthdayPicker by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val photoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         selectedPhotoUri = uri
     }
@@ -129,7 +149,11 @@ fun NewPetScreen(
                 )
                 PhotoPickerPreview(
                     imageUri = selectedPhotoUri,
-                    onClick = { photoPicker.launch("image/*") },
+                    onClick = {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                     modifier = Modifier.padding(top = 20.dp)
                 )
             }
@@ -160,12 +184,12 @@ fun NewPetScreen(
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    NewPetField(
+                    BirthdayField(
                         label = "Cumplea\u00f1os",
                         value = birthday,
-                        onValueChange = { birthday = it },
-                        placeholder = "mm/dd/yyyy",
+                        placeholder = "mm/dd",
                         icon = { CalendarIcon(color = MutedBrown) },
+                        onClick = { showBirthdayPicker = true },
                         modifier = Modifier.weight(1f)
                     )
                     NewPetField(
@@ -252,6 +276,17 @@ fun NewPetScreen(
                 )
             }
         }
+    }
+
+    if (showBirthdayPicker) {
+        BirthdayPickerDialog(
+            initialValue = birthday,
+            onDismiss = { showBirthdayPicker = false },
+            onDateSelected = { selectedDate ->
+                birthday = selectedDate
+                showBirthdayPicker = false
+            }
+        )
     }
 }
 
@@ -500,6 +535,212 @@ private fun NewPetField(
             }
         }
     }
+}
+
+@Composable
+private fun BirthdayField(
+    label: String,
+    value: String,
+    placeholder: String,
+    icon: @Composable () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        FieldLabel(text = label)
+        Row(
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .fillMaxWidth()
+                .height(38.dp)
+                .clip(RoundedCornerShape(7.dp))
+                .background(NewPetFieldSurface)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            icon()
+            Text(
+                text = value.ifBlank { placeholder },
+                modifier = Modifier.padding(start = 10.dp),
+                color = if (value.isBlank()) MutedBrown else InkBrown,
+                fontSize = 11.sp,
+                lineHeight = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun BirthdayPickerDialog(
+    initialValue: String,
+    onDismiss: () -> Unit,
+    onDateSelected: (String) -> Unit
+) {
+    var selectedMonth by remember { mutableStateOf(parseBirthdayMonth(initialValue)) }
+    var selectedDay by remember {
+        mutableStateOf(parseBirthdayDay(initialValue).coerceIn(1, BirthdayMonthDays[selectedMonth - 1]))
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Cumplea\u00f1os",
+                    color = TerracottaClay,
+                    fontSize = 18.sp,
+                    lineHeight = 22.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = "Selecciona mes y d\u00eda",
+                    modifier = Modifier.padding(top = 4.dp),
+                    color = MutedBrown,
+                    fontSize = 11.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = {
+                            selectedMonth = if (selectedMonth == 1) 12 else selectedMonth - 1
+                            selectedDay = selectedDay.coerceAtMost(BirthdayMonthDays[selectedMonth - 1])
+                        }
+                    ) {
+                        Text(text = "<", color = TerracottaClay, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = BirthdayMonths[selectedMonth - 1],
+                        color = InkBrown,
+                        fontSize = 15.sp,
+                        lineHeight = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    TextButton(
+                        onClick = {
+                            selectedMonth = if (selectedMonth == 12) 1 else selectedMonth + 1
+                            selectedDay = selectedDay.coerceAtMost(BirthdayMonthDays[selectedMonth - 1])
+                        }
+                    ) {
+                        Text(text = ">", color = TerracottaClay, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                BirthdayDayGrid(
+                    daysInMonth = BirthdayMonthDays[selectedMonth - 1],
+                    selectedDay = selectedDay,
+                    onDayClick = { selectedDay = it }
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(text = "Cancelar", color = MutedBrown)
+                    }
+                    TextButton(
+                        onClick = {
+                            onDateSelected(formatBirthday(selectedMonth, selectedDay))
+                        }
+                    ) {
+                        Text(
+                            text = "Aceptar",
+                            color = TerracottaClay,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BirthdayDayGrid(
+    daysInMonth: Int,
+    selectedDay: Int,
+    onDayClick: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        for (row in 0 until 5) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                for (column in 1..7) {
+                    val day = row * 7 + column
+                    if (day <= daysInMonth) {
+                        val isSelected = day == selectedDay
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) TerracottaClay else Color.Transparent)
+                                .clickable { onDayClick(day) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = day.toString(),
+                                color = if (isSelected) Color.White else InkBrown,
+                                fontSize = 12.sp,
+                                lineHeight = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        Spacer(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun parseBirthdayMonth(value: String): Int {
+    return value.substringBefore("/")
+        .toIntOrNull()
+        ?.coerceIn(1, 12)
+        ?: 1
+}
+
+private fun parseBirthdayDay(value: String): Int {
+    return value.substringAfter("/", missingDelimiterValue = "1")
+        .toIntOrNull()
+        ?.coerceIn(1, 31)
+        ?: 1
+}
+
+private fun formatBirthday(month: Int, day: Int): String {
+    return "%02d/%02d".format(month, day)
 }
 
 @Composable

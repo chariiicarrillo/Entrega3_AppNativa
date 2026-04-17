@@ -292,6 +292,11 @@ private fun firebaseAuthMessage(exception: Exception?): String {
         rawMessage.contains("password", ignoreCase = true) -> {
             "Correo o contrasena incorrectos."
         }
+        rawMessage.contains("credential", ignoreCase = true) ||
+            rawMessage.contains("malformed", ignoreCase = true) ||
+            rawMessage.contains("expired", ignoreCase = true) -> {
+            "Correo o contrasena incorrectos."
+        }
         rawMessage.contains("no user", ignoreCase = true) ||
             rawMessage.contains("user", ignoreCase = true) -> {
             "No encontramos una cuenta con ese correo."

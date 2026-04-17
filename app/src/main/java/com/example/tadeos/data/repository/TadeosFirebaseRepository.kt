@@ -12,6 +12,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 
 object TadeosFirebaseRepository {
     private val auth: FirebaseAuth
@@ -411,16 +412,20 @@ object TadeosFirebaseRepository {
         onComplete: (String?, String?, String?) -> Unit
     ) {
         val imageReference = storage.reference.child(storagePath)
+        val metadata = StorageMetadata.Builder()
+            .setContentType("image/jpeg")
+            .build()
 
-        imageReference.putFile(imageUri)
-            .addOnSuccessListener {
+        imageReference.putFile(imageUri, metadata)
+            .continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    task.exception?.let { exception -> throw exception }
+                }
+
                 imageReference.downloadUrl
-                    .addOnSuccessListener { downloadUri ->
-                        onComplete(downloadUri.toString(), storagePath, null)
-                    }
-                    .addOnFailureListener { exception ->
-                        onComplete(null, null, friendlyFirebaseMessage(exception))
-                    }
+            }
+            .addOnSuccessListener { downloadUri ->
+                onComplete(downloadUri.toString(), storagePath, null)
             }
             .addOnFailureListener { exception ->
                 onComplete(null, null, friendlyFirebaseMessage(exception))
@@ -524,6 +529,9 @@ object TadeosFirebaseRepository {
             }
             rawMessage.contains("bucket", ignoreCase = true) -> {
                 "Activa Firebase Storage y verifica el bucket del proyecto."
+            }
+            rawMessage.contains("Object does not exist", ignoreCase = true) -> {
+                "No pudimos guardar la imagen en Storage. Verifica que Firebase Storage este activo e intenta de nuevo."
             }
             rawMessage.isNotBlank() -> rawMessage
             else -> "No pudimos completar la accion en Firebase."
