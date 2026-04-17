@@ -63,10 +63,9 @@ import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
 import com.example.tadeos.ui.theme.TerracottaClay
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
 
 private val RegisterBackground = Color(0xFFFBF4EA)
 private val RegisterCardBorder = Color(0xFFF3EAE0)
@@ -87,7 +86,6 @@ fun RegisterScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val auth = remember { FirebaseAuth.getInstance() }
-    val firestore = remember { FirebaseFirestore.getInstance() }
 
     Column(
         modifier = Modifier
@@ -238,18 +236,17 @@ fun RegisterScreen(
 
                                     user.updateProfile(profileUpdates)
                                         .addOnCompleteListener {
-                                            saveUserProfile(
-                                                firestore = firestore,
+                                            TadeosFirebaseRepository.saveRegisteredUserProfile(
                                                 uid = user.uid,
                                                 name = cleanName,
                                                 email = cleanEmail,
                                                 phone = cleanPhone
-                                            ) { success, exception ->
+                                            ) { success, message ->
                                                 isLoading = false
                                                 if (success) {
                                                     onRegisterClick()
                                                 } else {
-                                                    errorMessage = registerDatabaseMessage(exception)
+                                                    errorMessage = message
                                                 }
                                             }
                                         }
@@ -355,31 +352,6 @@ private fun validateRegisterData(
     }
 }
 
-private fun saveUserProfile(
-    firestore: FirebaseFirestore,
-    uid: String,
-    name: String,
-    email: String,
-    phone: String,
-    onComplete: (Boolean, Exception?) -> Unit
-) {
-    // Documento base del usuario para enlazar Firebase Auth con Firestore.
-    val userData = hashMapOf<String, Any>(
-        "uid" to uid,
-        "name" to name,
-        "email" to email,
-        "phone" to phone,
-        "createdAt" to FieldValue.serverTimestamp()
-    )
-
-    firestore.collection("users")
-        .document(uid)
-        .set(userData)
-        .addOnCompleteListener { task ->
-            onComplete(task.isSuccessful, task.exception)
-        }
-}
-
 private fun registerAuthMessage(exception: Exception?): String {
     val rawMessage = exception?.localizedMessage.orEmpty()
 
@@ -400,21 +372,6 @@ private fun registerAuthMessage(exception: Exception?): String {
         }
         rawMessage.isNotBlank() -> rawMessage
         else -> "No pudimos crear la cuenta. Intenta de nuevo."
-    }
-}
-
-private fun registerDatabaseMessage(exception: Exception?): String {
-    val rawMessage = exception?.localizedMessage.orEmpty()
-
-    return when {
-        rawMessage.contains("permission", ignoreCase = true) -> {
-            "La cuenta fue creada, pero Firestore no permite guardar el perfil."
-        }
-        rawMessage.contains("network", ignoreCase = true) -> {
-            "La cuenta fue creada, pero no pudimos guardar el perfil por conexion."
-        }
-        rawMessage.isNotBlank() -> rawMessage
-        else -> "La cuenta fue creada, pero no pudimos guardar el perfil."
     }
 }
 

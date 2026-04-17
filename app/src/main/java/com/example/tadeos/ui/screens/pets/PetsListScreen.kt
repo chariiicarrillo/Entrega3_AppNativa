@@ -23,6 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,13 +45,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tadeos.R
-import com.example.tadeos.data.mock.MockPets
 import com.example.tadeos.data.model.Pet
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.TadeosPetImage
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
@@ -72,7 +75,20 @@ fun PetsListScreen(
     onProfileClick: () -> Unit
 ) {
     var search by remember { mutableStateOf("") }
-    val pets = MockPets.pets
+    var pets by remember { mutableStateOf<List<Pet>>(emptyList()) }
+    var dataMessage by remember { mutableStateOf<String?>(null) }
+
+    DisposableEffect(Unit) {
+        val listener = TadeosFirebaseRepository.observePets { loadedPets, message ->
+            pets = loadedPets
+            dataMessage = message
+        }
+
+        onDispose {
+            listener?.remove()
+        }
+    }
+
     val filteredPets = remember(search, pets) {
         if (search.isBlank()) {
             pets
@@ -105,7 +121,7 @@ fun PetsListScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PetsTopBar(onProfileClick = onProfileClick)
-            PetsHeader(totalPets = pets.size + 1)
+            PetsHeader(totalPets = pets.size)
             PetSearchBar(
                 value = search,
                 onValueChange = { search = it }
@@ -114,7 +130,14 @@ fun PetsListScreen(
             filteredPets.forEach { pet ->
                 PetFamilyCard(
                     pet = pet,
-                    onClick = { onPetDetailClick(pet.name) }
+                    onClick = { onPetDetailClick(pet.id) }
+                )
+            }
+
+            if (filteredPets.isEmpty()) {
+                EmptyPetsFamilyCard(
+                    message = dataMessage ?: "No hay mascotas para mostrar.",
+                    onClick = onNewPetClick
                 )
             }
 
@@ -252,7 +275,7 @@ private fun PetFamilyCard(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             PetPhoto(
-                name = pet.name,
+                pet = pet,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
@@ -470,24 +493,50 @@ private fun NewPetFamilyCard(onClick: () -> Unit) {
 }
 
 @Composable
-private fun PetPhoto(
-    name: String,
-    modifier: Modifier = Modifier
+private fun EmptyPetsFamilyCard(
+    message: String,
+    onClick: () -> Unit
 ) {
-    Image(
-        painter = painterResource(id = name.petPhotoRes()),
-        contentDescription = "Foto de $name",
-        contentScale = ContentScale.Crop,
-        modifier = modifier
-    )
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = PetsSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = message,
+                color = MutedBrown,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Registrar primera mascota",
+                modifier = Modifier.padding(top = 8.dp),
+                color = TerracottaClay,
+                fontSize = 12.sp,
+                lineHeight = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
 }
 
-private fun String.petPhotoRes(): Int {
-    return when (this) {
-        "Luna" -> R.drawable.pet_luna
-        "Cooper" -> R.drawable.pet_cooper
-        else -> R.drawable.pet_otto
-    }
+@Composable
+private fun PetPhoto(
+    pet: Pet,
+    modifier: Modifier = Modifier
+) {
+    TadeosPetImage(
+        pet = pet,
+        modifier = modifier
+    )
 }
 
 private fun Pet.shortDescription(): String {

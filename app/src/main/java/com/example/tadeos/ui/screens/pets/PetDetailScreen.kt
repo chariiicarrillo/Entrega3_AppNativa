@@ -1,7 +1,6 @@
 package com.example.tadeos.ui.screens.pets
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +19,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,18 +35,16 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.tadeos.R
-import com.example.tadeos.data.mock.MockPets
 import com.example.tadeos.data.model.Pet
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.TadeosPetImage
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
@@ -58,7 +60,6 @@ private val DetailDivider = Color(0xFFE4DDD4)
 
 private data class PetDetailUi(
     val name: String,
-    val imageRes: Int,
     val gender: String,
     val age: String,
     val weight: String,
@@ -74,16 +75,25 @@ private data class PetDetailUi(
 
 @Composable
 fun PetDetailScreen(
-    petName: String,
+    petId: String,
     onHealthClick: () -> Unit,
     onBackToPetsClick: () -> Unit,
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    val petDetail = MockPets.pets
-        .firstOrNull { pet -> pet.name.equals(petName, ignoreCase = true) }
-        ?.toDetailUi()
-        ?: MockPets.pets.first().toDetailUi()
+    var pet by remember { mutableStateOf<Pet?>(null) }
+    var dataMessage by remember { mutableStateOf<String?>(null) }
+
+    DisposableEffect(petId) {
+        val listener = TadeosFirebaseRepository.observePet(petId) { loadedPet, message ->
+            pet = loadedPet
+            dataMessage = message
+        }
+
+        onDispose {
+            listener?.remove()
+        }
+    }
 
     ScreenContainer(
         title = "",
@@ -105,66 +115,40 @@ fun PetDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             DetailTopBar(onBackClick = onBackToPetsClick)
-            PetHeroImage(pet = petDetail)
-            PetIdentityHeader(pet = petDetail)
-            PetMetrics(pet = petDetail)
-            HealthSummaryGrid(pet = petDetail)
-            MedicalControlCard(onClick = onHealthClick)
-            IdentificationSection(pet = petDetail)
-            RecentNotesSection(pet = petDetail)
+            val currentPet = pet
+
+            if (currentPet == null) {
+                DetailMessage(text = dataMessage ?: "Cargando mascota...")
+            } else {
+                val petDetail = currentPet.toDetailUi()
+                PetHeroImage(pet = currentPet)
+                PetIdentityHeader(pet = petDetail)
+                PetMetrics(pet = petDetail)
+                HealthSummaryGrid(pet = petDetail)
+                MedicalControlCard(onClick = onHealthClick)
+                IdentificationSection(pet = petDetail)
+                RecentNotesSection(pet = petDetail)
+            }
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 private fun Pet.toDetailUi(): PetDetailUi {
-    return when (name) {
-        "Luna" -> PetDetailUi(
-            name = name,
-            imageRes = R.drawable.pet_luna,
-            gender = "Hembra",
-            age = "5 A\u00f1os",
-            weight = "4.5kg",
-            lastVisit = "15 de oct, 2023",
-            mood = "Tranquila",
-            diet = "Balanceada",
-            vaccines = "Al d\u00eda",
-            nextExam = "En 2 meses",
-            microchipId = "#771204889021",
-            coatColor = "Crema/Marr\u00f3n",
-            recentNote = "Luna mantiene buenos signos generales. Se recomienda continuar con el control de peso y revisar su calendario de vacunas en la pr\u00f3xima consulta."
-        )
-        "Cooper" -> PetDetailUi(
-            name = name,
-            imageRes = R.drawable.pet_cooper,
-            gender = "Macho",
-            age = "8 meses",
-            weight = "12kg",
-            lastVisit = "02 de nov, 2023",
-            mood = "Activo",
-            diet = "Cachorro",
-            vaccines = "Pendiente",
-            nextExam = "En 1 mes",
-            microchipId = "#662019734508",
-            coatColor = "Blanco/Caf\u00e9",
-            recentNote = "Cooper sigue en etapa de crecimiento. Mantener el seguimiento activo, completar vacunas pendientes y reforzar sus rutinas de alimentaci\u00f3n."
-        )
-        else -> PetDetailUi(
-            name = name,
-            imageRes = R.drawable.pet_otto,
-            gender = "Macho",
-            age = "4 A\u00f1os",
-            weight = "26kg",
-            lastVisit = "12 de oct, 2023",
-            mood = "Juguet\u00f3n",
-            diet = "Sin cereales",
-            vaccines = "Al d\u00eda",
-            nextExam = "En 3 meses",
-            microchipId = "#985112003445",
-            coatColor = "Dorado/Crema",
-            recentNote = "Otto ha mostrado un gran progreso con sus ejercicios de flexibilidad de cadera. Aseg\u00farese de que su dieta se mantenga constante con la ingesta diaria prescrita."
-        )
-    }
+    return PetDetailUi(
+        name = name,
+        gender = gender.ifBlank { "Macho" },
+        age = age.replace("anos", "A\u00f1os").ifBlank { "Sin edad" },
+        weight = weight.replace(" ", "").ifBlank { "Sin peso" },
+        lastVisit = lastVisit.ifBlank { "Sin visitas" },
+        mood = mood.ifBlank { "Activo" },
+        diet = diet.ifBlank { "Sin definir" },
+        vaccines = vaccines.ifBlank { healthStatus.ifBlank { "Pendiente" } },
+        nextExam = nextExam.ifBlank { nextCare.ifBlank { "Por programar" } },
+        microchipId = microchipId.ifBlank { "Sin registrar" },
+        coatColor = coatColor.ifBlank { "Sin registrar" },
+        recentNote = recentNote.ifBlank { "Sin notas recientes." }
+    )
 }
 
 @Composable
@@ -189,11 +173,28 @@ private fun DetailTopBar(onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun PetHeroImage(pet: PetDetailUi) {
-    Image(
-        painter = painterResource(id = pet.imageRes),
-        contentDescription = "Foto de ${pet.name}",
-        contentScale = ContentScale.Crop,
+private fun DetailMessage(text: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = DetailSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(18.dp),
+            color = MutedBrown,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun PetHeroImage(pet: Pet) {
+    TadeosPetImage(
+        pet = pet,
         modifier = Modifier
             .fillMaxWidth()
             .height(190.dp)

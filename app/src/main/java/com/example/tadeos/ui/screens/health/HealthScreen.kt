@@ -2,7 +2,6 @@ package com.example.tadeos.ui.screens.health
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +20,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,17 +34,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.tadeos.R
-import com.example.tadeos.data.mock.MockPets
 import com.example.tadeos.data.model.Pet
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.TadeosPetImage
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.TerracottaClay
@@ -58,9 +57,25 @@ fun HealthScreen(
     onPetsClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    var selectedPet by remember { mutableStateOf("Luna") }
-    val orderedPets = listOf("Luna", "Cooper", "Otto").mapNotNull { petName ->
-        MockPets.pets.firstOrNull { pet -> pet.name == petName }
+    var selectedPetId by remember { mutableStateOf("") }
+    var pets by remember { mutableStateOf<List<Pet>>(emptyList()) }
+    var dataMessage by remember { mutableStateOf<String?>(null) }
+
+    DisposableEffect(Unit) {
+        val listener = TadeosFirebaseRepository.observePets { loadedPets, message ->
+            pets = loadedPets
+            dataMessage = message
+        }
+
+        onDispose {
+            listener?.remove()
+        }
+    }
+
+    LaunchedEffect(pets) {
+        if (selectedPetId.isBlank() && pets.isNotEmpty()) {
+            selectedPetId = pets.first().id
+        }
     }
 
     ScreenContainer(
@@ -110,11 +125,17 @@ fun HealthScreen(
                 modifier = Modifier.padding(top = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                orderedPets.forEach { pet ->
+                pets.forEach { pet ->
                     SelectablePetCard(
                         pet = pet,
-                        selected = selectedPet == pet.name,
-                        onClick = { selectedPet = pet.name }
+                        selected = selectedPetId == pet.id,
+                        onClick = { selectedPetId = pet.id }
+                    )
+                }
+
+                if (pets.isEmpty()) {
+                    HealthEmptyMessage(
+                        text = dataMessage ?: "Registra una mascota para crear controles de salud."
                     )
                 }
             }
@@ -187,10 +208,8 @@ private fun SelectablePetCard(
                 .padding(start = 18.dp, end = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = pet.photoRes()),
-                contentDescription = "Foto de ${pet.name}",
-                contentScale = ContentScale.Crop,
+            TadeosPetImage(
+                pet = pet,
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(8.dp))
@@ -224,6 +243,25 @@ private fun SelectablePetCard(
 }
 
 @Composable
+private fun HealthEmptyMessage(text: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = HealthCardSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(16.dp),
+            color = MutedBrown,
+            fontSize = 11.sp,
+            lineHeight = 15.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 private fun ContinueButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
@@ -245,19 +283,7 @@ private fun ContinueButton(onClick: () -> Unit) {
 }
 
 private fun Pet.displayName(): String {
-    return if (name == "Cooper") {
-        "Copper"
-    } else {
-        name
-    }
-}
-
-private fun Pet.photoRes(): Int {
-    return when (name) {
-        "Luna" -> R.drawable.pet_luna
-        "Cooper" -> R.drawable.pet_cooper
-        else -> R.drawable.pet_otto
-    }
+    return name
 }
 
 private fun Pet.displayBreed(): String {

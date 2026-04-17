@@ -26,6 +26,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,10 +49,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tadeos.R
-import com.example.tadeos.data.mock.MockPets
 import com.example.tadeos.data.model.Pet
+import com.example.tadeos.data.model.UserProfile
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.TadeosPetImage
 import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
@@ -68,7 +75,30 @@ fun HomeScreen(
     onProfileClick: () -> Unit,
     onNewPetClick: () -> Unit
 ) {
-    val pets = rememberMenuPets()
+    var pets by remember { mutableStateOf<List<Pet>>(emptyList()) }
+    var profile by remember { mutableStateOf<UserProfile?>(null) }
+    var dataMessage by remember { mutableStateOf<String?>(null) }
+
+    DisposableEffect(Unit) {
+        val petListener = TadeosFirebaseRepository.observePets { loadedPets, message ->
+            pets = loadedPets
+            dataMessage = message
+        }
+        val profileListener = TadeosFirebaseRepository.observeUserProfile { loadedProfile, _ ->
+            profile = loadedProfile
+        }
+
+        onDispose {
+            petListener?.remove()
+            profileListener?.remove()
+        }
+    }
+
+    val firstName = profile?.name
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+        ?.substringBefore(" ")
+        ?: "Usuario"
 
     ScreenContainer(
         title = "",
@@ -90,7 +120,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(28.dp))
 
             Text(
-                text = "Bienvenido Usuario",
+                text = "Bienvenido $firstName",
                 fontSize = 26.sp,
                 lineHeight = 32.sp,
                 color = InkBrown,
@@ -136,17 +166,24 @@ fun HomeScreen(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                items(pets) { pet ->
-                    PetMenuCard(
-                        pet = pet,
-                        onHealthClick = onHealthClick
-                    )
+                items(pets, key = { pet -> pet.id }) { pet ->
+                PetMenuCard(
+                    pet = pet,
+                    onHealthClick = onHealthClick
+                )
                 }
+            }
+
+            if (pets.isEmpty()) {
+                EmptyPetsMessage(
+                    message = dataMessage ?: "Aun no tienes mascotas registradas.",
+                    onNewPetClick = onNewPetClick
+                )
             }
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            NextAppointmentCard()
+            NextAppointmentCard(pet = pets.firstOrNull { pet -> pet.nextCare.isNotBlank() })
 
             Spacer(modifier = Modifier.height(20.dp))
         }
@@ -154,15 +191,38 @@ fun HomeScreen(
 }
 
 @Composable
-private fun rememberMenuPets(): List<Pet> {
-    val pets = MockPets.pets
-    val luna = pets.firstOrNull { it.name == "Luna" }
-    val otherPets = pets.filterNot { it.name == "Luna" }
-
-    return if (luna != null) {
-        listOf(luna) + otherPets
-    } else {
-        pets
+private fun EmptyPetsMessage(
+    message: String,
+    onNewPetClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MenuSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MenuCardBorder)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = message,
+                color = MutedBrown,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Registrar mascota",
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .clickable(onClick = onNewPetClick),
+                color = TerracottaClay,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -279,10 +339,10 @@ private fun PetMenuCard(
                     .fillMaxWidth()
                     .height(PetPhotoHeight)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(if (pet.name == "Luna") Color(0xFFE8DFDB) else MenuImageTint),
+                    .background(Color(0xFFE8DFDB)),
                 contentAlignment = Alignment.Center
             ) {
-                PetPhoto(name = pet.name)
+                PetPhoto(pet = pet)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -374,27 +434,13 @@ private fun PetActionButton(
 }
 
 @Composable
-private fun PetPhoto(name: String) {
-    if (name == "Luna") {
-        LunaPhoto()
-    } else {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(PetPhotoHeight)
-                .background(MenuImageTint),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_tadeos),
-                contentDescription = "Foto de $name",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(PetPhotoHeight)
-            )
-        }
-    }
+private fun PetPhoto(pet: Pet) {
+    TadeosPetImage(
+        pet = pet,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(PetPhotoHeight)
+    )
 }
 
 @Composable
@@ -464,7 +510,11 @@ private fun LunaPhoto() {
 }
 
 @Composable
-private fun NextAppointmentCard() {
+private fun NextAppointmentCard(pet: Pet?) {
+    val petName = pet?.name ?: "Sin mascotas"
+    val nextCare = pet?.nextCare ?: "Registra una mascota"
+    val careStatus = pet?.healthStatus ?: "Control pendiente"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -484,7 +534,7 @@ private fun NextAppointmentCard() {
                 color = MutedBrown
             )
             Text(
-                text = "Luna",
+                text = petName,
                 modifier = Modifier.padding(top = 2.dp),
                 fontSize = 15.sp,
                 lineHeight = 18.sp,
@@ -492,7 +542,7 @@ private fun NextAppointmentCard() {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "15 de Octubre",
+                text = nextCare,
                 modifier = Modifier.padding(top = 2.dp),
                 fontSize = 13.sp,
                 lineHeight = 16.sp,
@@ -500,7 +550,7 @@ private fun NextAppointmentCard() {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Vet. San Francisco",
+                text = careStatus,
                 fontSize = 11.sp,
                 lineHeight = 14.sp,
                 color = MutedBrown

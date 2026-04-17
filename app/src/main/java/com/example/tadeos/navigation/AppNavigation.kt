@@ -66,8 +66,8 @@ fun AppNavigation() {
         }
         composable(AppRoutes.PetsList.route) {
             PetsListScreen(
-                onPetDetailClick = { petName ->
-                    navController.navigate(AppRoutes.PetDetail.createRoute(petName))
+                onPetDetailClick = { petId ->
+                    navController.navigate(AppRoutes.PetDetail.createRoute(petId))
                 },
                 onNewPetClick = { navController.navigate(AppRoutes.NewPet.route) },
                 onHomeClick = { navController.navigate(AppRoutes.Home.route) },
@@ -78,17 +78,17 @@ fun AppNavigation() {
         composable(
             route = AppRoutes.PetDetail.route,
             arguments = listOf(
-                navArgument(AppRoutes.PetDetail.ARG_PET_NAME) {
+                navArgument(AppRoutes.PetDetail.ARG_PET_ID) {
                     type = NavType.StringType
                 }
             )
         ) { backStackEntry ->
-            val petName = backStackEntry.arguments
-                ?.getString(AppRoutes.PetDetail.ARG_PET_NAME)
+            val petId = backStackEntry.arguments
+                ?.getString(AppRoutes.PetDetail.ARG_PET_ID)
                 .orEmpty()
 
             PetDetailScreen(
-                petName = petName,
+                petId = petId,
                 onHealthClick = { navController.navigate(AppRoutes.Health.route) },
                 onBackToPetsClick = { navController.popBackStack() },
                 onHomeClick = { navController.navigate(AppRoutes.Home.route) },

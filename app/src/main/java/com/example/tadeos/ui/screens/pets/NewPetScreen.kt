@@ -1,5 +1,8 @@
 package com.example.tadeos.ui.screens.pets
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -18,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,8 +42,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import com.example.tadeos.data.model.Pet
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
 import com.example.tadeos.ui.theme.InkBrown
@@ -67,6 +75,14 @@ fun NewPetScreen(
     var age by remember { mutableStateOf("") }
     var sex by remember { mutableStateOf("Macho") }
     var weight by remember { mutableStateOf("") }
+    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        selectedPhotoUri = uri
+    }
 
     ScreenContainer(
         title = "",
@@ -112,6 +128,8 @@ fun NewPetScreen(
                     textAlign = TextAlign.Center
                 )
                 PhotoPickerPreview(
+                    imageUri = selectedPhotoUri,
+                    onClick = { photoPicker.launch("image/*") },
                     modifier = Modifier.padding(top = 20.dp)
                 )
             }
@@ -180,13 +198,118 @@ fun NewPetScreen(
                     )
                 }
 
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage.orEmpty(),
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 11.sp,
+                        lineHeight = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 SavePetButton(
-                    onClick = onSaveClick,
+                    text = if (isSaving) "Guardando..." else "Guardar Mascota",
+                    enabled = !isSaving,
+                    onClick = {
+                        val validationMessage = validatePetForm(
+                            name = petName,
+                            breed = breed,
+                            age = age,
+                            weight = weight
+                        )
+
+                        if (validationMessage != null) {
+                            errorMessage = validationMessage
+                            return@SavePetButton
+                        }
+
+                        isSaving = true
+                        errorMessage = null
+
+                        TadeosFirebaseRepository.createPet(
+                            pet = buildPetDraft(
+                                name = petName,
+                                species = species,
+                                breed = breed,
+                                birthday = birthday,
+                                age = age,
+                                gender = sex,
+                                weight = weight
+                            ),
+                            imageUri = selectedPhotoUri
+                        ) { success, message ->
+                            isSaving = false
+                            if (success) {
+                                onSaveClick()
+                            } else {
+                                errorMessage = message
+                            }
+                        }
+                    },
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
         }
     }
+}
+
+private fun validatePetForm(
+    name: String,
+    breed: String,
+    age: String,
+    weight: String
+): String? {
+    return when {
+        name.isBlank() -> "Ingresa el nombre de la mascota."
+        breed.isBlank() -> "Ingresa la raza de la mascota."
+        age.isBlank() -> "Ingresa la edad de la mascota."
+        weight.isBlank() -> "Ingresa el peso de la mascota."
+        else -> null
+    }
+}
+
+private fun buildPetDraft(
+    name: String,
+    species: String,
+    breed: String,
+    birthday: String,
+    age: String,
+    gender: String,
+    weight: String
+): Pet {
+    val normalizedSpecies = if (species == "Gato") "Felino" else "Canino"
+    val cleanAge = age.trim()
+    val cleanWeight = weight.trim()
+
+    return Pet(
+        name = name.trim(),
+        species = normalizedSpecies,
+        breed = breed.trim(),
+        birthday = birthday.trim(),
+        age = if (cleanAge.contains("ano", ignoreCase = true) || cleanAge.contains("mes", ignoreCase = true)) {
+            cleanAge
+        } else {
+            "$cleanAge anos"
+        },
+        gender = gender.trim().ifBlank { "Macho" },
+        weight = if (cleanWeight.contains("kg", ignoreCase = true)) {
+            cleanWeight
+        } else {
+            "$cleanWeight kg"
+        },
+        healthStatus = "Seguimiento inicial",
+        nextCare = "Control pendiente",
+        lastVisit = "Sin visitas",
+        mood = "Activo",
+        diet = "Sin definir",
+        vaccines = "Pendiente",
+        nextExam = "Por programar",
+        microchipId = "Sin registrar",
+        coatColor = "Sin registrar",
+        recentNote = "Mascota registrada desde la app."
+    )
 }
 
 @Composable
@@ -211,9 +334,13 @@ private fun NewPetTopBar(onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun PhotoPickerPreview(modifier: Modifier = Modifier) {
+private fun PhotoPickerPreview(
+    imageUri: Uri?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier = modifier,
+        modifier = modifier.clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -223,11 +350,20 @@ private fun PhotoPickerPreview(modifier: Modifier = Modifier) {
                 .background(NewPetUploadSurface),
             contentAlignment = Alignment.Center
         ) {
-            MapPinShape(color = NewPetPhotoMark)
-            CameraPlusIcon(color = TerracottaClay)
+            if (imageUri != null) {
+                AsyncImage(
+                    model = imageUri,
+                    contentDescription = "Foto seleccionada",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            } else {
+                MapPinShape(color = NewPetPhotoMark)
+                CameraPlusIcon(color = TerracottaClay)
+            }
         }
         Text(
-            text = "A\u00f1adir foto",
+            text = if (imageUri == null) "A\u00f1adir foto" else "Cambiar foto",
             modifier = Modifier.padding(top = 8.dp),
             color = TerracottaClay,
             fontSize = 10.sp,
@@ -379,6 +515,8 @@ private fun FieldLabel(text: String) {
 
 @Composable
 private fun SavePetButton(
+    text: String,
+    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -387,14 +525,14 @@ private fun SavePetButton(
             .fillMaxWidth()
             .height(50.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(TerracottaClay)
-            .clickable(onClick = onClick),
+            .background(if (enabled) TerracottaClay else MutedBrown)
+            .clickable(enabled = enabled, onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         SaveIcon(color = Color.White)
         Text(
-            text = "Guardar Mascota",
+            text = text,
             modifier = Modifier.padding(start = 7.dp),
             color = Color.White,
             fontSize = 13.sp,

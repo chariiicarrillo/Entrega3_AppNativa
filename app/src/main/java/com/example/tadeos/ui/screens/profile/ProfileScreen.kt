@@ -1,6 +1,10 @@
 package com.example.tadeos.ui.screens.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,21 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
@@ -31,11 +20,30 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
 import com.example.tadeos.navigation.AppRoutes
-import com.example.tadeos.ui.components.PrimaryAction
-import com.example.tadeos.ui.components.SectionTitle
 import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.SectionTitle
 import com.example.tadeos.ui.components.TadeosCard
+import com.example.tadeos.ui.components.TadeosProfileImage
 
 @Composable
 fun ProfileScreen(
@@ -44,210 +52,277 @@ fun ProfileScreen(
     onHealthClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
-    var name by remember { mutableStateOf("Alejandro García") }
-    var email by remember { mutableStateOf("alejandro.garcia@example.com") }
-    var phone by remember { mutableStateOf("+57 310 345 6748") }
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var photoUrl by remember { mutableStateOf("") }
+    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
+    var isDirty by remember { mutableStateOf(false) }
+    var statusMessage by remember { mutableStateOf<String?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        selectedPhotoUri = uri
+        if (uri != null) {
+            isDirty = true
+        }
+    }
+
+    DisposableEffect(Unit) {
+        val listener = TadeosFirebaseRepository.observeUserProfile { profile, message ->
+            statusMessage = message
+            if (profile != null && !isDirty) {
+                name = profile.name
+                email = profile.email
+                phone = profile.phone
+                photoUrl = profile.photoUrl
+            }
+        }
+
+        onDispose {
+            listener?.remove()
+        }
+    }
 
     ScreenContainer(
         title = "Editar Perfil",
-        subtitle = "Configuración de tu cuenta personal.",
+        subtitle = "Configuracion de tu cuenta personal.",
         selectedRoute = AppRoutes.Profile.route,
         onHomeClick = onHomeClick,
         onPetsClick = onPetsClick,
         onHealthClick = onHealthClick,
         onProfileClick = {}
     ) {
-        // Perfil Avatar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center
         ) {
-            Box(
+            TadeosProfileImage(
+                photoUrl = photoUrl,
+                localImageUri = selectedPhotoUri,
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(108.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = "Avatar",
-                    modifier = Modifier.size(60.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            // Edit icon overlay
+                    .clickable { photoPicker.launch("image/*") }
+            )
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(38.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.secondary)
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 8.dp, bottom = 8.dp),
+                    .align(Alignment.BottomCenter)
+                    .clickable { photoPicker.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.Edit,
-                    contentDescription = "Editar",
+                    contentDescription = "Cambiar foto",
                     tint = MaterialTheme.colorScheme.onSecondary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(19.dp)
                 )
             }
         }
 
-        // Información del usuario
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp),
+                .padding(bottom = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = name,
+                text = name.ifBlank { "Usuario" },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "✓ Usuario Verificado",
+                text = "Usuario verificado",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.secondary
             )
         }
 
-        // Campos editables
         TadeosCard {
-            Text(
-                text = "Nombre",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            OutlinedTextField(
+            ProfileField(
+                label = "Nombre",
                 value = name,
-                onValueChange = { name = it },
-                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    name = it
+                    isDirty = true
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.Person,
                         contentDescription = "Nombre",
                         modifier = Modifier.size(20.dp)
                     )
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                }
             )
-        }
-
-        TadeosCard {
-            Text(
-                text = "Correo",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            OutlinedTextField(
+            ProfileField(
+                label = "Correo",
                 value = email,
-                onValueChange = { email = it },
-                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {},
+                readOnly = true,
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.Email,
                         contentDescription = "Correo",
                         modifier = Modifier.size(20.dp)
                     )
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                }
             )
-        }
-
-        TadeosCard {
-            Text(
-                text = "Teléfono",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            OutlinedTextField(
+            ProfileField(
+                label = "Telefono",
                 value = phone,
-                onValueChange = { phone = it },
-                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    phone = it
+                    isDirty = true
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.Phone,
-                        contentDescription = "Teléfono",
+                        contentDescription = "Telefono",
                         modifier = Modifier.size(20.dp)
                     )
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                }
             )
         }
 
-        PrimaryAction(text = "Guardar Cambios", onClick = onHomeClick)
+        if (statusMessage != null) {
+            Text(
+                text = statusMessage.orEmpty(),
+                modifier = Modifier.fillMaxWidth(),
+                color = if (statusMessage == "Perfil actualizado.") {
+                    MaterialTheme.colorScheme.secondary
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center
+            )
+        }
 
-        // Secciones de preferencias
-        SectionTitle(text = "")
+        Button(
+            onClick = {
+                val cleanName = name.trim()
+                if (cleanName.isBlank()) {
+                    statusMessage = "Ingresa tu nombre."
+                    return@Button
+                }
 
-        // Privacidad
-        TadeosCard {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
+                isSaving = true
+                statusMessage = null
+
+                TadeosFirebaseRepository.updateUserProfile(
+                    name = cleanName,
+                    phone = phone.trim(),
+                    imageUri = selectedPhotoUri
+                ) { success, message ->
+                    isSaving = false
+                    if (success) {
+                        isDirty = false
+                        selectedPhotoUri = null
+                        statusMessage = "Perfil actualizado."
+                    } else {
+                        statusMessage = message
+                    }
+                }
+            },
+            enabled = !isSaving,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = if (isSaving) "Guardando..." else "Guardar cambios")
+        }
+
+        OutlinedButton(
+            onClick = onLogoutClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Cerrar sesion")
+        }
+
+        SectionTitle(text = "Preferencias")
+
+        PreferenceCard(
+            icon = {
                 Icon(
                     imageVector = Icons.Filled.Lock,
                     contentDescription = "Privacidad",
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.secondary
                 )
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(
-                        text = "Privacidad",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Gestiona tu visibilidad y acceso a datos.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+            },
+            title = "Privacidad",
+            description = "Gestiona tu visibilidad y acceso a datos."
+        )
 
-        // Notificaciones
-        TadeosCard {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
+        PreferenceCard(
+            icon = {
                 Icon(
                     imageVector = Icons.Filled.Notifications,
                     contentDescription = "Notificaciones",
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.secondary
                 )
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(
-                        text = "Notificaciones",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Configura alertas de vacunas, exámenes y medicamentos.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            },
+            title = "Notificaciones",
+            description = "Configura alertas de vacunas, examenes y medicamentos."
+        )
+    }
+}
+
+@Composable
+private fun ProfileField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    leadingIcon: @Composable () -> Unit,
+    readOnly: Boolean = false
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = leadingIcon,
+            singleLine = true,
+            readOnly = readOnly,
+            shape = MaterialTheme.shapes.medium
+        )
+    }
+}
+
+@Composable
+private fun PreferenceCard(
+    icon: @Composable () -> Unit,
+    title: String,
+    description: String
+) {
+    TadeosCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            icon()
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

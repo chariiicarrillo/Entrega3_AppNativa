@@ -7,11 +7,11 @@ sealed class AppRoutes(val route: String) {
     data object Register : AppRoutes("register")
     data object Home : AppRoutes("home")
     data object PetsList : AppRoutes("pets_list")
-    data object PetDetail : AppRoutes("pet_detail/{petName}") {
-        const val ARG_PET_NAME = "petName"
+    data object PetDetail : AppRoutes("pet_detail/{petId}") {
+        const val ARG_PET_ID = "petId"
 
-        fun createRoute(petName: String): String {
-            return "pet_detail/${Uri.encode(petName)}"
+        fun createRoute(petId: String): String {
+            return "pet_detail/${Uri.encode(petId)}"
         }
     }
     data object NewPet : AppRoutes("new_pet")
