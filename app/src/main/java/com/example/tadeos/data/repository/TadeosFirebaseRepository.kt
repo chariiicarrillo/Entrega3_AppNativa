@@ -319,9 +319,13 @@ object TadeosFirebaseRepository {
         )
 
         fun savePet(photoUrl: String = "", photoStoragePath: String = "") {
+            var localListener: ListenerRegistration? = null
             val complete = guardedBooleanCompletion(
                 timeoutMessage = "Firestore tarda demasiado en guardar la mascota. Verifica que Cloud Firestore este activo.",
-                onComplete = onComplete
+                onComplete = onComplete,
+                onFinish = {
+                    localListener?.remove()
+                }
             )
             val petToSave = basePet.copy(
                 photoUrl = photoUrl,
@@ -331,6 +335,17 @@ object TadeosFirebaseRepository {
             val data = petToSave.toFirestoreMap().toMutableMap()
             data["createdAt"] = FieldValue.serverTimestamp()
             data["updatedAt"] = FieldValue.serverTimestamp()
+
+            localListener = document.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    complete(false, friendlyFirebaseMessage(error))
+                    return@addSnapshotListener
+                }
+
+                if (snapshot?.exists() == true) {
+                    complete(true, null)
+                }
+            }
 
             document
                 .set(data)
@@ -419,7 +434,8 @@ object TadeosFirebaseRepository {
 
     private fun guardedBooleanCompletion(
         timeoutMessage: String,
-        onComplete: (Boolean, String?) -> Unit
+        onComplete: (Boolean, String?) -> Unit,
+        onFinish: () -> Unit = {}
     ): (Boolean, String?) -> Unit {
         var didComplete = false
         val timeoutHandler = Handler(Looper.getMainLooper())
@@ -433,6 +449,7 @@ object TadeosFirebaseRepository {
             if (!didComplete) {
                 didComplete = true
                 timeoutHandler.removeCallbacks(timeoutRunnable)
+                onFinish()
                 onComplete(success, message)
             }
         }
