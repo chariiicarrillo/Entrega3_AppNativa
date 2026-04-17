@@ -128,6 +128,14 @@ object TadeosFirebaseRepository {
         }
 
         fun saveProfile(photoUrl: String? = null, photoStoragePath: String? = null) {
+            var localListener: ListenerRegistration? = null
+            val complete = guardedBooleanCompletion(
+                timeoutMessage = "Firestore tarda demasiado en guardar el perfil. Verifica que Cloud Firestore este activo.",
+                onComplete = onComplete,
+                onFinish = {
+                    localListener?.remove()
+                }
+            )
             val data = mutableMapOf<String, Any>(
                 "uid" to user.uid,
                 "name" to name,
@@ -139,6 +147,27 @@ object TadeosFirebaseRepository {
             if (photoUrl != null && photoStoragePath != null) {
                 data["photoUrl"] = photoUrl
                 data["photoStoragePath"] = photoStoragePath
+            }
+
+            localListener = userDocument(user.uid).addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    complete(false, friendlyFirebaseMessage(error))
+                    return@addSnapshotListener
+                }
+
+                if (snapshot?.exists() == true && snapshot.matchesProfileUpdate(name, phone, photoUrl)) {
+                    val profileUpdates = UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .apply {
+                            if (photoUrl != null) {
+                                setPhotoUri(Uri.parse(photoUrl))
+                            }
+                        }
+                        .build()
+
+                    user.updateProfile(profileUpdates)
+                    complete(true, null)
+                }
             }
 
             userDocument(user.uid)
@@ -154,10 +183,10 @@ object TadeosFirebaseRepository {
                         .build()
 
                     user.updateProfile(profileUpdates)
-                        .addOnCompleteListener { onComplete(true, null) }
+                        .addOnCompleteListener { complete(true, null) }
                 }
                 .addOnFailureListener { exception ->
-                    onComplete(false, friendlyFirebaseMessage(exception))
+                    complete(false, friendlyFirebaseMessage(exception))
                 }
         }
 
@@ -535,6 +564,19 @@ object TadeosFirebaseRepository {
             photoUrl = getString("photoUrl").orEmpty().ifBlank { fallback.photoUrl },
             photoStoragePath = getString("photoStoragePath").orEmpty()
         )
+    }
+
+    private fun DocumentSnapshot.matchesProfileUpdate(
+        name: String,
+        phone: String,
+        photoUrl: String?
+    ): Boolean {
+        val hasBaseData = getString("name").orEmpty() == name &&
+            getString("phone").orEmpty() == phone
+
+        val hasPhotoData = photoUrl == null || getString("photoUrl").orEmpty() == photoUrl
+
+        return hasBaseData && hasPhotoData
     }
 
     private fun DocumentSnapshot.toPet(uid: String): Pet? {
