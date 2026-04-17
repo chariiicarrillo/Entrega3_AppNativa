@@ -168,13 +168,14 @@ private fun rememberMenuPets(): List<Pet> {
 
 @Composable
 private fun HomeTopBar(onProfileClick: () -> Unit) {
-    Box(
+    Row(
         modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // El logo queda centrado y la campana se conserva como accion lateral.
+        // La marca queda alineada al inicio como en el wireframe del menu.
         Row(
             modifier = Modifier
-                .align(Alignment.Center)
                 .clickable(onClick = onProfileClick),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -183,13 +184,14 @@ private fun HomeTopBar(onProfileClick: () -> Unit) {
                 contentDescription = "Perfil de Tadeo's",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
             )
             Text(
                 text = "Tadeo's",
-                modifier = Modifier.padding(start = 10.dp),
-                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 12.dp),
+                fontSize = 18.sp,
+                lineHeight = 22.sp,
                 color = TerracottaClay,
                 fontWeight = FontWeight.Bold
             )
@@ -197,7 +199,7 @@ private fun HomeTopBar(onProfileClick: () -> Unit) {
 
         BellIcon(
             color = TerracottaClay,
-            modifier = Modifier.align(Alignment.CenterEnd)
+            modifier = Modifier.size(30.dp)
         )
     }
 }
@@ -216,6 +218,7 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
         ) {
             Text(
                 text = "\u00bfNueva mascota en\ncasa?",
+                modifier = Modifier.fillMaxWidth(),
                 fontSize = 21.sp,
                 lineHeight = 27.sp,
                 color = MutedSage,
@@ -224,7 +227,9 @@ private fun NewPetHeroCard(onNewPetClick: () -> Unit) {
             )
             Text(
                 text = "Registra a tu nuevo amigo para\nempezar a llevar su control de\nsalud y bienestar.",
-                modifier = Modifier.padding(top = 14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp),
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 color = MutedSage,
@@ -507,9 +512,9 @@ private fun NextAppointmentCard() {
 @Composable
 private fun BellIcon(
     color: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier.size(24.dp)
 ) {
-    Canvas(modifier = modifier.size(24.dp)) {
+    Canvas(modifier = modifier) {
         val stroke = Stroke(
             width = 1.8.dp.toPx(),
             cap = StrokeCap.Round,
