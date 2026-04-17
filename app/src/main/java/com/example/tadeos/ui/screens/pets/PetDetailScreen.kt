@@ -39,6 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tadeos.R
+import com.example.tadeos.data.mock.MockPets
+import com.example.tadeos.data.model.Pet
 import com.example.tadeos.navigation.AppRoutes
 import com.example.tadeos.ui.components.ScreenContainer
 import com.example.tadeos.ui.theme.InkBrown
@@ -54,13 +56,35 @@ private val DetailChipGray = Color(0xFFE8E4DE)
 private val DetailIconGreen = Color(0xFFDCEAD5)
 private val DetailDivider = Color(0xFFE4DDD4)
 
+private data class PetDetailUi(
+    val name: String,
+    val imageRes: Int,
+    val gender: String,
+    val age: String,
+    val weight: String,
+    val lastVisit: String,
+    val mood: String,
+    val diet: String,
+    val vaccines: String,
+    val nextExam: String,
+    val microchipId: String,
+    val coatColor: String,
+    val recentNote: String
+)
+
 @Composable
 fun PetDetailScreen(
+    petName: String,
     onHealthClick: () -> Unit,
     onBackToPetsClick: () -> Unit,
     onHomeClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
+    val petDetail = MockPets.pets
+        .firstOrNull { pet -> pet.name.equals(petName, ignoreCase = true) }
+        ?.toDetailUi()
+        ?: MockPets.pets.first().toDetailUi()
+
     ScreenContainer(
         title = "",
         showHeader = false,
@@ -81,15 +105,65 @@ fun PetDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             DetailTopBar(onBackClick = onBackToPetsClick)
-            PetHeroImage()
-            PetIdentityHeader()
-            PetMetrics()
-            HealthSummaryGrid()
+            PetHeroImage(pet = petDetail)
+            PetIdentityHeader(pet = petDetail)
+            PetMetrics(pet = petDetail)
+            HealthSummaryGrid(pet = petDetail)
             MedicalControlCard(onClick = onHealthClick)
-            IdentificationSection()
-            RecentNotesSection()
+            IdentificationSection(pet = petDetail)
+            RecentNotesSection(pet = petDetail)
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+private fun Pet.toDetailUi(): PetDetailUi {
+    return when (name) {
+        "Luna" -> PetDetailUi(
+            name = name,
+            imageRes = R.drawable.pet_luna,
+            gender = "Hembra",
+            age = "5 A\u00f1os",
+            weight = "4.5kg",
+            lastVisit = "15 de oct, 2023",
+            mood = "Tranquila",
+            diet = "Balanceada",
+            vaccines = "Al d\u00eda",
+            nextExam = "En 2 meses",
+            microchipId = "#771204889021",
+            coatColor = "Crema/Marr\u00f3n",
+            recentNote = "Luna mantiene buenos signos generales. Se recomienda continuar con el control de peso y revisar su calendario de vacunas en la pr\u00f3xima consulta."
+        )
+        "Cooper" -> PetDetailUi(
+            name = name,
+            imageRes = R.drawable.pet_cooper,
+            gender = "Macho",
+            age = "8 meses",
+            weight = "12kg",
+            lastVisit = "02 de nov, 2023",
+            mood = "Activo",
+            diet = "Cachorro",
+            vaccines = "Pendiente",
+            nextExam = "En 1 mes",
+            microchipId = "#662019734508",
+            coatColor = "Blanco/Caf\u00e9",
+            recentNote = "Cooper sigue en etapa de crecimiento. Mantener el seguimiento activo, completar vacunas pendientes y reforzar sus rutinas de alimentaci\u00f3n."
+        )
+        else -> PetDetailUi(
+            name = name,
+            imageRes = R.drawable.pet_otto,
+            gender = "Macho",
+            age = "4 A\u00f1os",
+            weight = "26kg",
+            lastVisit = "12 de oct, 2023",
+            mood = "Juguet\u00f3n",
+            diet = "Sin cereales",
+            vaccines = "Al d\u00eda",
+            nextExam = "En 3 meses",
+            microchipId = "#985112003445",
+            coatColor = "Dorado/Crema",
+            recentNote = "Otto ha mostrado un gran progreso con sus ejercicios de flexibilidad de cadera. Aseg\u00farese de que su dieta se mantenga constante con la ingesta diaria prescrita."
+        )
     }
 }
 
@@ -115,10 +189,10 @@ private fun DetailTopBar(onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun PetHeroImage() {
+private fun PetHeroImage(pet: PetDetailUi) {
     Image(
-        painter = painterResource(id = R.drawable.pet_otto),
-        contentDescription = "Foto de Otto",
+        painter = painterResource(id = pet.imageRes),
+        contentDescription = "Foto de ${pet.name}",
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .fillMaxWidth()
@@ -128,10 +202,10 @@ private fun PetHeroImage() {
 }
 
 @Composable
-private fun PetIdentityHeader() {
+private fun PetIdentityHeader(pet: PetDetailUi) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Otto",
+            text = pet.name,
             color = TerracottaClay,
             fontSize = 32.sp,
             lineHeight = 35.sp,
@@ -143,12 +217,12 @@ private fun PetIdentityHeader() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             DetailChip(
-                text = "Macho",
+                text = pet.gender,
                 containerColor = DetailChipGreen,
                 contentColor = MutedSage
             )
             DetailChip(
-                text = "4 A\u00f1os",
+                text = pet.age,
                 containerColor = DetailChipGray,
                 contentColor = MutedBrown
             )
@@ -157,13 +231,13 @@ private fun PetIdentityHeader() {
 }
 
 @Composable
-private fun PetMetrics() {
+private fun PetMetrics(pet: PetDetailUi) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        DetailMetric(label = "Peso", value = "26kg")
-        DetailMetric(label = "\u00daltima visita", value = "12 de oct, 2023")
+        DetailMetric(label = "Peso", value = pet.weight)
+        DetailMetric(label = "\u00daltima visita", value = pet.lastVisit)
     }
 }
 
@@ -192,7 +266,7 @@ private fun DetailMetric(
 }
 
 @Composable
-private fun HealthSummaryGrid() {
+private fun HealthSummaryGrid(pet: PetDetailUi) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -200,13 +274,13 @@ private fun HealthSummaryGrid() {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             DetailStatusCard(
                 label = "Estado de \u00e1nimo",
-                value = "Juguet\u00f3n",
+                value = pet.mood,
                 icon = { HeartIcon(color = TerracottaClay) },
                 modifier = Modifier.weight(1f)
             )
             DetailStatusCard(
                 label = "Dieta",
-                value = "Sin cereales",
+                value = pet.diet,
                 icon = { DietIcon(color = TerracottaClay) },
                 modifier = Modifier.weight(1f)
             )
@@ -214,13 +288,13 @@ private fun HealthSummaryGrid() {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             DetailStatusCard(
                 label = "Vacunas",
-                value = "Al d\u00eda",
+                value = pet.vaccines,
                 icon = { VaccineIcon(color = TerracottaClay) },
                 modifier = Modifier.weight(1f)
             )
             DetailStatusCard(
                 label = "Pr\u00f3ximo Examen",
-                value = "En 3 meses",
+                value = pet.nextExam,
                 icon = { ExamIcon(color = TerracottaClay) },
                 modifier = Modifier.weight(1f)
             )
@@ -327,7 +401,7 @@ private fun MedicalControlCard(onClick: () -> Unit) {
 }
 
 @Composable
-private fun IdentificationSection() {
+private fun IdentificationSection(pet: PetDetailUi) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -341,7 +415,7 @@ private fun IdentificationSection() {
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
-                IdentificationRow(label = "ID de Microchip", value = "#985112003445")
+                IdentificationRow(label = "ID de Microchip", value = pet.microchipId)
                 Spacer(modifier = Modifier.height(9.dp))
                 Box(
                     modifier = Modifier
@@ -350,7 +424,7 @@ private fun IdentificationSection() {
                         .background(DetailDivider)
                 )
                 Spacer(modifier = Modifier.height(9.dp))
-                IdentificationRow(label = "Color", value = "Dorado/Crema")
+                IdentificationRow(label = "Color", value = pet.coatColor)
             }
         }
     }
@@ -384,7 +458,7 @@ private fun IdentificationRow(
 }
 
 @Composable
-private fun RecentNotesSection() {
+private fun RecentNotesSection(pet: PetDetailUi) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionLabel(text = "Notas Recientes")
         Card(
@@ -399,7 +473,7 @@ private fun RecentNotesSection() {
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = "\"Oliver ha mostrado un gran progreso con sus ejercicios de flexibilidad de cadera. Aseg\u00farese de su dieta se mantenga constante con la ingesta diaria prescrita.\"",
+                    text = "\"${pet.recentNote}\"",
                     modifier = Modifier.fillMaxWidth(),
                     color = InkBrown,
                     fontSize = 10.sp,

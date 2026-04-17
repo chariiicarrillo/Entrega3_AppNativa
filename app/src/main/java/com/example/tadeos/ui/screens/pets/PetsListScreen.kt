@@ -65,7 +65,7 @@ private val PetsDash = Color(0xFFE9B9A7)
 
 @Composable
 fun PetsListScreen(
-    onPetDetailClick: () -> Unit,
+    onPetDetailClick: (String) -> Unit,
     onNewPetClick: () -> Unit,
     onHomeClick: () -> Unit,
     onHealthClick: () -> Unit,
@@ -114,7 +114,7 @@ fun PetsListScreen(
             filteredPets.forEach { pet ->
                 PetFamilyCard(
                     pet = pet,
-                    onClick = onPetDetailClick
+                    onClick = { onPetDetailClick(pet.name) }
                 )
             }
 
