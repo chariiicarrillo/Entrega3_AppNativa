@@ -60,6 +60,7 @@ import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
 import com.example.tadeos.ui.theme.TerracottaClay
+import com.google.firebase.auth.FirebaseAuth
 
 private val LoginBackground = Color(0xFFFBF4EA)
 private val LoginCardBorder = Color(0xFFF3EAE0)
@@ -72,6 +73,9 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val auth = remember { FirebaseAuth.getInstance() }
 
     Column(
         modifier = Modifier
@@ -161,8 +165,42 @@ fun LoginScreen(
                     )
                 }
 
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage.orEmpty(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
                 Button(
-                    onClick = onLoginClick,
+                    onClick = {
+                        val cleanEmail = email.trim()
+                        val validationMessage = validateLoginData(cleanEmail, password)
+
+                        if (validationMessage != null) {
+                            errorMessage = validationMessage
+                            return@Button
+                        }
+
+                        isLoading = true
+                        errorMessage = null
+
+                        auth.signInWithEmailAndPassword(cleanEmail, password)
+                            .addOnCompleteListener { task ->
+                                isLoading = false
+                                if (task.isSuccessful) {
+                                    onLoginClick()
+                                } else {
+                                    errorMessage = firebaseAuthMessage(task.exception)
+                                }
+                            }
+                    },
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -173,7 +211,7 @@ fun LoginScreen(
                     )
                 ) {
                     Text(
-                        text = "Iniciar Sesión",
+                        text = if (isLoading) "Ingresando..." else "Iniciar Sesión",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -218,6 +256,40 @@ fun LoginScreen(
                 )
             }
         }
+    }
+}
+
+private fun validateLoginData(
+    email: String,
+    password: String
+): String? {
+    return when {
+        email.isBlank() -> "Ingresa tu correo electronico."
+        password.isBlank() -> "Ingresa tu contrasena."
+        password.length < 6 -> "La contrasena debe tener al menos 6 caracteres."
+        else -> null
+    }
+}
+
+private fun firebaseAuthMessage(exception: Exception?): String {
+    val rawMessage = exception?.localizedMessage.orEmpty()
+
+    return when {
+        rawMessage.contains("password", ignoreCase = true) -> {
+            "Correo o contrasena incorrectos."
+        }
+        rawMessage.contains("no user", ignoreCase = true) ||
+            rawMessage.contains("user", ignoreCase = true) -> {
+            "No encontramos una cuenta con ese correo."
+        }
+        rawMessage.contains("network", ignoreCase = true) -> {
+            "Revisa tu conexion a internet e intenta de nuevo."
+        }
+        rawMessage.contains("disabled", ignoreCase = true) -> {
+            "Esta cuenta esta deshabilitada."
+        }
+        rawMessage.isNotBlank() -> rawMessage
+        else -> "No pudimos iniciar sesion. Intenta de nuevo."
     }
 }
 

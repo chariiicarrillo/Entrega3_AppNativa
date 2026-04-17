@@ -63,6 +63,8 @@ import com.example.tadeos.ui.theme.InkBrown
 import com.example.tadeos.ui.theme.MutedBrown
 import com.example.tadeos.ui.theme.MutedSage
 import com.example.tadeos.ui.theme.TerracottaClay
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
 
 private val RegisterBackground = Color(0xFFFBF4EA)
 private val RegisterCardBorder = Color(0xFFF3EAE0)
@@ -80,6 +82,9 @@ fun RegisterScreen(
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val auth = remember { FirebaseAuth.getInstance() }
 
     Column(
         modifier = Modifier
@@ -182,8 +187,60 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage.orEmpty(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
                 Button(
-                    onClick = onRegisterClick,
+                    onClick = {
+                        val cleanName = name.trim()
+                        val cleanEmail = email.trim()
+                        val validationMessage = validateRegisterData(
+                            name = cleanName,
+                            email = cleanEmail,
+                            password = password
+                        )
+
+                        if (validationMessage != null) {
+                            errorMessage = validationMessage
+                            return@Button
+                        }
+
+                        isLoading = true
+                        errorMessage = null
+
+                        auth.createUserWithEmailAndPassword(cleanEmail, password)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    val profileUpdates = UserProfileChangeRequest.Builder()
+                                        .setDisplayName(cleanName)
+                                        .build()
+
+                                    auth.currentUser
+                                        ?.updateProfile(profileUpdates)
+                                        ?.addOnCompleteListener {
+                                            isLoading = false
+                                            onRegisterClick()
+                                        }
+                                        ?: run {
+                                            isLoading = false
+                                            onRegisterClick()
+                                        }
+                                } else {
+                                    isLoading = false
+                                    errorMessage = registerAuthMessage(task.exception)
+                                }
+                            }
+                    },
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -194,7 +251,7 @@ fun RegisterScreen(
                     )
                 ) {
                     Text(
-                        text = "Crear Cuenta  →",
+                        text = if (isLoading) "Creando cuenta..." else "Crear Cuenta  →",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -260,6 +317,43 @@ fun RegisterScreen(
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+private fun validateRegisterData(
+    name: String,
+    email: String,
+    password: String
+): String? {
+    return when {
+        name.isBlank() -> "Ingresa tu nombre completo."
+        email.isBlank() -> "Ingresa tu correo electronico."
+        password.isBlank() -> "Ingresa una contrasena."
+        password.length < 6 -> "La contrasena debe tener al menos 6 caracteres."
+        else -> null
+    }
+}
+
+private fun registerAuthMessage(exception: Exception?): String {
+    val rawMessage = exception?.localizedMessage.orEmpty()
+
+    return when {
+        rawMessage.contains("email address is already", ignoreCase = true) ||
+            rawMessage.contains("already in use", ignoreCase = true) -> {
+            "Ya existe una cuenta con este correo."
+        }
+        rawMessage.contains("badly formatted", ignoreCase = true) ||
+            rawMessage.contains("email address", ignoreCase = true) -> {
+            "Ingresa un correo electronico valido."
+        }
+        rawMessage.contains("password", ignoreCase = true) -> {
+            "La contrasena debe tener al menos 6 caracteres."
+        }
+        rawMessage.contains("network", ignoreCase = true) -> {
+            "Revisa tu conexion a internet e intenta de nuevo."
+        }
+        rawMessage.isNotBlank() -> rawMessage
+        else -> "No pudimos crear la cuenta. Intenta de nuevo."
     }
 }
 

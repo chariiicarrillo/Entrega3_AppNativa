@@ -15,10 +15,12 @@ import com.example.tadeos.ui.screens.pets.NewPetScreen
 import com.example.tadeos.ui.screens.pets.PetDetailScreen
 import com.example.tadeos.ui.screens.pets.PetsListScreen
 import com.example.tadeos.ui.screens.profile.ProfileScreen
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val auth = FirebaseAuth.getInstance()
 
     NavHost(
         navController = navController,
@@ -26,13 +28,25 @@ fun AppNavigation() {
     ) {
         composable(AppRoutes.Login.route) {
             LoginScreen(
-                onLoginClick = { navController.navigate(AppRoutes.Home.route) },
+                onLoginClick = {
+                    navController.navigate(AppRoutes.Home.route) {
+                        popUpTo(AppRoutes.Login.route) {
+                            inclusive = true
+                        }
+                    }
+                },
                 onRegisterClick = { navController.navigate(AppRoutes.Register.route) }
             )
         }
         composable(AppRoutes.Register.route) {
             RegisterScreen(
-                onRegisterClick = { navController.navigate(AppRoutes.Home.route) },
+                onRegisterClick = {
+                    navController.navigate(AppRoutes.Home.route) {
+                        popUpTo(AppRoutes.Login.route) {
+                            inclusive = true
+                        }
+                    }
+                },
                 onBackToLoginClick = { navController.popBackStack() },
                 onTermsClick = { navController.navigate(AppRoutes.TermsAndConditions.route) }
             )
@@ -103,7 +117,15 @@ fun AppNavigation() {
                 onHomeClick = { navController.navigate(AppRoutes.Home.route) },
                 onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
                 onHealthClick = { navController.navigate(AppRoutes.Health.route) },
-                onLogoutClick = { navController.navigate(AppRoutes.Login.route) }
+                onLogoutClick = {
+                    auth.signOut()
+                    navController.navigate(AppRoutes.Login.route) {
+                        popUpTo(AppRoutes.Home.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
     }
