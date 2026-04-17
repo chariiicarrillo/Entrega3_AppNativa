@@ -1,6 +1,8 @@
 package com.example.tadeos.data.repository
 
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import com.example.tadeos.data.model.Pet
 import com.example.tadeos.data.model.UserProfile
 import com.google.firebase.auth.FirebaseAuth
@@ -15,6 +17,8 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 
 object TadeosFirebaseRepository {
+    private const val FIREBASE_TIMEOUT_MS = 20000L
+
     private val auth: FirebaseAuth
         get() = FirebaseAuth.getInstance()
 
@@ -22,7 +26,10 @@ object TadeosFirebaseRepository {
         get() = FirebaseFirestore.getInstance()
 
     private val storage: FirebaseStorage
-        get() = FirebaseStorage.getInstance()
+        get() = FirebaseStorage.getInstance().apply {
+            maxUploadRetryTimeMillis = FIREBASE_TIMEOUT_MS
+            maxOperationRetryTimeMillis = FIREBASE_TIMEOUT_MS
+        }
 
     private fun usersCollection() = firestore.collection("users")
 
@@ -312,6 +319,10 @@ object TadeosFirebaseRepository {
         )
 
         fun savePet(photoUrl: String = "", photoStoragePath: String = "") {
+            val complete = guardedBooleanCompletion(
+                timeoutMessage = "Firestore tarda demasiado en guardar la mascota. Verifica que Cloud Firestore este activo.",
+                onComplete = onComplete
+            )
             val petToSave = basePet.copy(
                 photoUrl = photoUrl,
                 photoStoragePath = photoStoragePath
@@ -323,9 +334,9 @@ object TadeosFirebaseRepository {
 
             document
                 .set(data)
-                .addOnSuccessListener { onComplete(true, null) }
+                .addOnSuccessListener { complete(true, null) }
                 .addOnFailureListener { exception ->
-                    onComplete(false, friendlyFirebaseMessage(exception))
+                    complete(false, friendlyFirebaseMessage(exception))
                 }
         }
 
@@ -403,7 +414,31 @@ object TadeosFirebaseRepository {
             .addOnSuccessListener { onComplete(true, null) }
             .addOnFailureListener { exception ->
                 onComplete(false, friendlyFirebaseMessage(exception))
+        }
+    }
+
+    private fun guardedBooleanCompletion(
+        timeoutMessage: String,
+        onComplete: (Boolean, String?) -> Unit
+    ): (Boolean, String?) -> Unit {
+        var didComplete = false
+        val timeoutHandler = Handler(Looper.getMainLooper())
+        lateinit var complete: (Boolean, String?) -> Unit
+
+        val timeoutRunnable = Runnable {
+            complete(false, timeoutMessage)
+        }
+
+        complete = { success, message ->
+            if (!didComplete) {
+                didComplete = true
+                timeoutHandler.removeCallbacks(timeoutRunnable)
+                onComplete(success, message)
             }
+        }
+
+        timeoutHandler.postDelayed(timeoutRunnable, FIREBASE_TIMEOUT_MS)
+        return complete
     }
 
     private fun uploadImage(
@@ -411,10 +446,24 @@ object TadeosFirebaseRepository {
         storagePath: String,
         onComplete: (String?, String?, String?) -> Unit
     ) {
+        var didComplete = false
+        val timeoutHandler = Handler(Looper.getMainLooper())
+        val timeoutRunnable = Runnable {
+            if (!didComplete) {
+                didComplete = true
+                onComplete(
+                    null,
+                    null,
+                    "La imagen tarda demasiado en subir. Revisa Storage, las reglas o la conexion e intenta de nuevo."
+                )
+            }
+        }
         val imageReference = storage.reference.child(storagePath)
         val metadata = StorageMetadata.Builder()
             .setContentType("image/jpeg")
             .build()
+
+        timeoutHandler.postDelayed(timeoutRunnable, FIREBASE_TIMEOUT_MS)
 
         imageReference.putFile(imageUri, metadata)
             .continueWithTask { task ->
@@ -425,10 +474,25 @@ object TadeosFirebaseRepository {
                 imageReference.downloadUrl
             }
             .addOnSuccessListener { downloadUri ->
-                onComplete(downloadUri.toString(), storagePath, null)
+                if (!didComplete) {
+                    didComplete = true
+                    timeoutHandler.removeCallbacks(timeoutRunnable)
+                    onComplete(downloadUri.toString(), storagePath, null)
+                }
             }
             .addOnFailureListener { exception ->
-                onComplete(null, null, friendlyFirebaseMessage(exception))
+                if (!didComplete) {
+                    didComplete = true
+                    timeoutHandler.removeCallbacks(timeoutRunnable)
+                    onComplete(null, null, friendlyFirebaseMessage(exception))
+                }
+            }
+            .addOnCanceledListener {
+                if (!didComplete) {
+                    didComplete = true
+                    timeoutHandler.removeCallbacks(timeoutRunnable)
+                    onComplete(null, null, "Se cancelo la subida de la imagen.")
+                }
             }
     }
 
@@ -523,6 +587,10 @@ object TadeosFirebaseRepository {
         return when {
             rawMessage.contains("permission", ignoreCase = true) -> {
                 "Firebase no permite esta accion. Revisa las reglas de Firestore o Storage."
+            }
+            rawMessage.contains("Cloud Firestore API", ignoreCase = true) ||
+                rawMessage.contains("firestore.googleapis.com", ignoreCase = true) -> {
+                "Activa Cloud Firestore en Firebase Console y espera unos minutos antes de intentar de nuevo."
             }
             rawMessage.contains("network", ignoreCase = true) -> {
                 "Revisa tu conexion a internet e intenta de nuevo."
