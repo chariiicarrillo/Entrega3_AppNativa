@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "233128486861",
-    "project_id": "tadeo-s",
-    "storage_bucket": "tadeo-s.firebasestorage.app"
+    "project_number": "YOUR_FIREBASE_PROJECT_NUMBER",
+    "project_id": "YOUR_FIREBASE_PROJECT_ID",
+    "storage_bucket": "YOUR_FIREBASE_STORAGE_BUCKET"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:233128486861:android:03819ba44dc3a0e11f0684",
+        "mobilesdk_app_id": "YOUR_FIREBASE_ANDROID_APP_ID",
         "android_client_info": {
           "package_name": "com.example.tadeos"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCIwH8n7KCVA2iifNwG0T3e07EMtyqWuCM"
+          "current_key": "YOUR_FIREBASE_API_KEY"
         }
       ],
       "services": {

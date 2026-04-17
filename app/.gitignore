@@ -1,1 +1,5 @@
-/build
+/build/
+
+# Configuracion local descargada desde Firebase Console.
+# Cada integrante debe tener su propio app/google-services.json sin subirlo al repo.
+google-services.json
