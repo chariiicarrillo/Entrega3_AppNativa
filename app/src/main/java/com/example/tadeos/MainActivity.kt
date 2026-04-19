@@ -12,6 +12,7 @@ import com.example.tadeos.data.repository.FacebookAuthBridge
 import com.example.tadeos.navigation.AppNavigation
 import com.example.tadeos.ui.theme.TadeosTheme
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -299,7 +299,7 @@ private fun TadeosBottomBar(
         )
         BottomBarItem(
             label = "Salud",
-            selected = selectedRoute == AppRoutes.Health.route,
+            selected = selectedRoute == AppRoutes.SelectPetHealth.route,
             onClick = onHealthClick,
             icon = { color -> HealthIcon(color = color) },
             modifier = Modifier.weight(1f)
