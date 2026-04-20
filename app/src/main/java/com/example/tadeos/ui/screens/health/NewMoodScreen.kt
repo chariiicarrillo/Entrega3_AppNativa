@@ -1,15 +1,34 @@
 package com.example.tadeos.ui.screens.health
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
+import com.example.tadeos.navigation.AppRoutes
+import com.example.tadeos.ui.components.PrimaryAction
+import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.SecondaryAction
+import com.example.tadeos.ui.components.TadeosCard
+import com.example.tadeos.ui.components.TadeosTextField
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -19,18 +38,27 @@ import java.util.Locale
 fun NewMoodScreen(
     petId: String,
     onBackClick: () -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    onHomeClick: () -> Unit,
+    onPetsClick: () -> Unit,
+    onHealthClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
     var selectedMood by remember { mutableStateOf("Feliz") }
     var registerDate by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+    var petName by remember { mutableStateOf("") }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
-    val brown = Color(0xFFA5542A)
-    val background = Color(0xFFF5F1EA)
+    DisposableEffect(petId) {
+        val listener = TadeosFirebaseRepository.observePet(petId) { pet, _ ->
+            petName = pet?.name.orEmpty()
+        }
+        onDispose { listener?.remove() }
+    }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -41,67 +69,56 @@ fun NewMoodScreen(
                         registerDate = dateFormatter.format(Date(millis))
                     }
                     showDatePicker = false
-                }) {
-                    Text("OK")
-                }
+                }) { Text("OK") }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
             }
         ) {
             DatePicker(state = datePickerState)
         }
     }
 
-    Scaffold(containerColor = background) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp)
-        ) {
+    ScreenContainer(
+        title = "Estado de animo",
+        subtitle = if (petName.isNotBlank()) "¿Como se siente $petName hoy?" else "Registra el estado de animo",
+        selectedRoute = AppRoutes.SelectPetHealth.route,
+        onHomeClick = onHomeClick,
+        onPetsClick = onPetsClick,
+        onHealthClick = onHealthClick,
+        onProfileClick = onProfileClick
+    ) {
+        TadeosCard {
+            Text(
+                text = "Como se siente hoy",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Volver",
-                        tint = brown
-                    )
-                }
-            }
-            Text("Estado de Ánimo", style = MaterialTheme.typography.headlineMedium, color = brown)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Mascota: $petId")
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text("¿Cómo se siente hoy?")
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Feliz", "Tranquilo", "Triste", "Ansioso").forEach { mood ->
                     FilterChip(
                         selected = selectedMood == mood,
                         onClick = { selectedMood = mood },
-                        label = { Text(mood) }
+                        label = { Text(mood) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                TadeosTextField(
                     value = registerDate,
-                    onValueChange = { },
-                    label = { Text("Fecha del registro") },
-                    modifier = Modifier.fillMaxWidth(),
-                    readOnly = true
+                    onValueChange = {},
+                    label = "Fecha del registro",
+                    readOnly = true,
+                    placeholder = "dd/MM/yyyy"
                 )
                 Box(
                     modifier = Modifier
@@ -110,26 +127,15 @@ fun NewMoodScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
+            TadeosTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Notas de comportamiento") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Notas de comportamiento",
                 minLines = 4
             )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = onSaveClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = brown)
-            ) {
-                Text("Guardar Estado")
-            }
         }
+
+        PrimaryAction(text = "Guardar estado", onClick = onSaveClick)
+        SecondaryAction(text = "Cancelar", onClick = onBackClick)
     }
 }

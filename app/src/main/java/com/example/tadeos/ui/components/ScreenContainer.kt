@@ -3,6 +3,7 @@ package com.example.tadeos.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -183,29 +184,41 @@ fun TadeosTextField(
     label: String,
     modifier: Modifier = Modifier,
     placeholder: String = "",
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    readOnly: Boolean = false,
+    enabled: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = if (minLines > 1) Int.MAX_VALUE else 1,
+    trailingIcon: (@Composable () -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     TextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
+        enabled = enabled,
+        readOnly = readOnly,
         label = { Text(text = label.uppercase()) },
         placeholder = {
             if (placeholder.isNotBlank()) {
                 Text(text = placeholder)
             }
         },
-        singleLine = true,
+        singleLine = minLines == 1 && maxLines == 1,
+        minLines = minLines,
+        maxLines = maxLines,
         shape = RoundedCornerShape(8.dp),
+        trailingIcon = trailingIcon,
+        keyboardOptions = keyboardOptions,
         visualTransformation = if (isPassword) {
             PasswordVisualTransformation()
         } else {
             VisualTransformation.None
         },
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent

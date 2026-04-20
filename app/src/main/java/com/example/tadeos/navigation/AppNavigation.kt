@@ -166,7 +166,11 @@ fun AppNavigation() {
             NewExamScreen(
                 petId = petId,
                 onBackClick = { navController.popBackStack() },
-                onSaveClick = { navController.popBackStack() }
+                onSaveClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.SelectPetHealth.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
 
@@ -185,7 +189,11 @@ fun AppNavigation() {
             NewDietScreen(
                 petId = petId,
                 onBackClick = { navController.popBackStack() },
-                onSaveClick = { navController.popBackStack() }
+                onSaveClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.SelectPetHealth.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
 
@@ -204,7 +212,11 @@ fun AppNavigation() {
             NewMoodScreen(
                 petId = petId,
                 onBackClick = { navController.popBackStack() },
-                onSaveClick = { navController.popBackStack() }
+                onSaveClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.SelectPetHealth.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
 
@@ -223,7 +235,11 @@ fun AppNavigation() {
             NewMedicationScreen(
                 petId = petId,
                 onBackClick = { navController.popBackStack() },
-                onSaveClick = { navController.popBackStack() }
+                onSaveClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.SelectPetHealth.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
             )
         }
 

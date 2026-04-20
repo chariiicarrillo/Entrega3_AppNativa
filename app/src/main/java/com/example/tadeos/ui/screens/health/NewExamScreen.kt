@@ -1,15 +1,28 @@
 package com.example.tadeos.ui.screens.health
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import com.example.tadeos.data.repository.TadeosFirebaseRepository
+import com.example.tadeos.navigation.AppRoutes
+import com.example.tadeos.ui.components.PrimaryAction
+import com.example.tadeos.ui.components.ScreenContainer
+import com.example.tadeos.ui.components.SecondaryAction
+import com.example.tadeos.ui.components.TadeosCard
+import com.example.tadeos.ui.components.TadeosTextField
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -19,19 +32,28 @@ import java.util.Locale
 fun NewExamScreen(
     petId: String,
     onBackClick: () -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    onHomeClick: () -> Unit,
+    onPetsClick: () -> Unit,
+    onHealthClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
     var examName by remember { mutableStateOf("") }
     var examDate by remember { mutableStateOf("") }
     var vetName by remember { mutableStateOf("") }
     var observations by remember { mutableStateOf("") }
+    var petName by remember { mutableStateOf("") }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
-    val brown = Color(0xFFA5542A)
-    val background = Color(0xFFF5F1EA)
+    DisposableEffect(petId) {
+        val listener = TadeosFirebaseRepository.observePet(petId) { pet, _ ->
+            petName = pet?.name.orEmpty()
+        }
+        onDispose { listener?.remove() }
+    }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -42,59 +64,39 @@ fun NewExamScreen(
                         examDate = dateFormatter.format(Date(millis))
                     }
                     showDatePicker = false
-                }) {
-                    Text("OK")
-                }
+                }) { Text("OK") }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
             }
         ) {
             DatePicker(state = datePickerState)
         }
     }
 
-    Scaffold(containerColor = background) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp)
-        ) {
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier.padding(bottom = 8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver",
-                    tint = brown
-                )
-            }
-            Text("Nuevo Examen", style = MaterialTheme.typography.headlineMedium, color = brown)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Mascota: $petId")
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OutlinedTextField(
+    ScreenContainer(
+        title = "Nuevo Examen",
+        subtitle = if (petName.isNotBlank()) "Para $petName" else "Registra un nuevo examen",
+        selectedRoute = AppRoutes.SelectPetHealth.route,
+        onHomeClick = onHomeClick,
+        onPetsClick = onPetsClick,
+        onHealthClick = onHealthClick,
+        onProfileClick = onProfileClick
+    ) {
+        TadeosCard {
+            TadeosTextField(
                 value = examName,
                 onValueChange = { examName = it },
-                label = { Text("Nombre del examen") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Nombre del examen"
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                TadeosTextField(
                     value = examDate,
-                    onValueChange = { },
-                    label = { Text("Fecha de realización") },
-                    modifier = Modifier.fillMaxWidth(),
-                    readOnly = true
+                    onValueChange = {},
+                    label = "Fecha de realizacion",
+                    readOnly = true,
+                    placeholder = "dd/MM/yyyy"
                 )
                 Box(
                     modifier = Modifier
@@ -103,35 +105,21 @@ fun NewExamScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
+            TadeosTextField(
                 value = vetName,
                 onValueChange = { vetName = it },
-                label = { Text("Veterinario / Clínica") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Veterinario / Clinica"
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
+            TadeosTextField(
                 value = observations,
                 onValueChange = { observations = it },
-                label = { Text("Resultados y observaciones") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Resultados y observaciones",
                 minLines = 4
             )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = onSaveClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = brown)
-            ) {
-                Text("Guardar Examen")
-            }
         }
+
+        PrimaryAction(text = "Guardar examen", onClick = onSaveClick)
+        SecondaryAction(text = "Cancelar", onClick = onBackClick)
     }
 }
