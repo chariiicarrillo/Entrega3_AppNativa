@@ -41,4 +41,9 @@ sealed class AppRoutes(val route: String) {
         const val ARG_PET_ID = "petId"
         fun createRoute(petId: String) = "new_medication/$petId"
     }
+
+    data object HealthRecordDetail : AppRoutes("health_record_detail/{recordId}") {
+        const val ARG_RECORD_ID = "recordId"
+        fun createRoute(recordId: String) = "health_record_detail/$recordId"
+    }
 }

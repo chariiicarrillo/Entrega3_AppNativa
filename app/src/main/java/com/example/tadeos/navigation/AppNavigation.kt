@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import com.example.tadeos.ui.screens.auth.LoginScreen
 import com.example.tadeos.ui.screens.auth.RegisterScreen
 import com.example.tadeos.ui.screens.health.HealthMenuScreen
+import com.example.tadeos.ui.screens.health.HealthRecordDetailScreen
 import com.example.tadeos.ui.screens.health.NewDietScreen
 import com.example.tadeos.ui.screens.health.NewExamScreen
 import com.example.tadeos.ui.screens.health.NewMedicationScreen
@@ -145,6 +146,9 @@ fun AppNavigation() {
                 onMoodClick = { navController.navigate(AppRoutes.NewMood.createRoute(petId)) },
                 onMedicationClick = { navController.navigate(AppRoutes.NewMedication.createRoute(petId)) },
                 onBackClick = { navController.popBackStack() },
+                onHistoryItemClick = { recordId ->
+                    navController.navigate(AppRoutes.HealthRecordDetail.createRoute(recordId))
+                },
                 onHomeClick = { navController.navigate(AppRoutes.Home.route) },
                 onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
                 onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
@@ -236,6 +240,28 @@ fun AppNavigation() {
                 petId = petId,
                 onBackClick = { navController.popBackStack() },
                 onSaveClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate(AppRoutes.Home.route) },
+                onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
+                onHealthClick = { navController.navigate(AppRoutes.SelectPetHealth.route) },
+                onProfileClick = { navController.navigate(AppRoutes.Profile.route) }
+            )
+        }
+
+        composable(
+            route = AppRoutes.HealthRecordDetail.route,
+            arguments = listOf(
+                navArgument(AppRoutes.HealthRecordDetail.ARG_RECORD_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val recordId = backStackEntry.arguments
+                ?.getString(AppRoutes.HealthRecordDetail.ARG_RECORD_ID)
+                .orEmpty()
+
+            HealthRecordDetailScreen(
+                recordId = recordId,
+                onBackClick = { navController.popBackStack() },
                 onHomeClick = { navController.navigate(AppRoutes.Home.route) },
                 onPetsClick = { navController.navigate(AppRoutes.PetsList.route) },
                 onHealthClick = { navController.navigate(AppRoutes.SelectPetHealth.route) },
