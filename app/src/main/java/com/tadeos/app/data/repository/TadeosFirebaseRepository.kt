@@ -3,6 +3,8 @@ package com.tadeos.app.data.repository
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import com.tadeos.app.data.model.HealthRecord
+import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.model.Pet
 import com.tadeos.app.data.model.UserProfile
 import com.google.firebase.auth.FirebaseAuth
@@ -36,6 +38,8 @@ object TadeosFirebaseRepository {
     private fun userDocument(uid: String) = usersCollection().document(uid)
 
     private fun petsCollection(uid: String) = userDocument(uid).collection("pets")
+
+    private fun healthRecordsCollection(uid: String) = userDocument(uid).collection("healthRecords")
 
     fun currentUserId(): String? = auth.currentUser?.uid
 
@@ -250,6 +254,121 @@ object TadeosFirebaseRepository {
 
                 onChange(snapshot?.toPet(uid), null)
             }
+    }
+
+    fun observeHealthRecords(
+        petId: String,
+        onChange: (List<HealthRecord>, String?) -> Unit
+    ): ListenerRegistration? {
+        val uid = currentUserId()
+        if (uid == null) {
+            onChange(emptyList(), "Inicia sesion para cargar el historial de salud.")
+            return null
+        }
+
+        return healthRecordsCollection(uid)
+            .whereEqualTo("petId", petId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    onChange(emptyList(), friendlyFirebaseMessage(error))
+                    return@addSnapshotListener
+                }
+
+                val records = snapshot?.documents
+                    ?.mapNotNull { document -> document.toHealthRecord(uid) }
+                    ?.sortedByDescending { record -> record.dateMillis }
+                    .orEmpty()
+
+                onChange(records, null)
+            }
+    }
+
+    fun observeHealthRecord(
+        recordId: String,
+        onChange: (HealthRecord?, String?) -> Unit
+    ): ListenerRegistration? {
+        val uid = currentUserId()
+        if (uid == null) {
+            onChange(null, "Inicia sesion para cargar este registro.")
+            return null
+        }
+
+        return healthRecordsCollection(uid).document(recordId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    onChange(null, friendlyFirebaseMessage(error))
+                    return@addSnapshotListener
+                }
+
+                onChange(snapshot?.toHealthRecord(uid), null)
+            }
+    }
+
+    fun createHealthRecord(
+        record: HealthRecord,
+        onComplete: (Boolean, String?) -> Unit
+    ) {
+        val uid = currentUserId()
+        if (uid == null) {
+            onComplete(false, "Inicia sesion para guardar el registro de salud.")
+            return
+        }
+        if (record.petId.isBlank()) {
+            onComplete(false, "Selecciona una mascota para guardar el registro.")
+            return
+        }
+
+        val document = healthRecordsCollection(uid).document()
+        val recordToSave = record.copy(
+            id = document.id,
+            userId = uid
+        )
+        val data = recordToSave.toFirestoreMap().toMutableMap()
+        data["createdAt"] = FieldValue.serverTimestamp()
+        data["updatedAt"] = FieldValue.serverTimestamp()
+
+        document
+            .set(data)
+            .addOnSuccessListener {
+                updatePetHealthSummary(recordToSave)
+                onComplete(true, null)
+            }
+            .addOnFailureListener { exception ->
+                onComplete(false, friendlyFirebaseMessage(exception))
+            }
+    }
+
+    private fun updatePetHealthSummary(record: HealthRecord) {
+        val uid = currentUserId() ?: return
+        val summary = mutableMapOf<String, Any>(
+            "updatedAt" to FieldValue.serverTimestamp()
+        )
+
+        when (record.type) {
+            HealthRecordTypes.VACCINE -> {
+                summary["vaccines"] = record.title
+                summary["healthStatus"] = record.title
+            }
+            HealthRecordTypes.DEWORMER -> {
+                summary["nextCare"] = record.title
+            }
+            HealthRecordTypes.EXAM -> {
+                summary["nextExam"] = record.title
+                summary["lastVisit"] = record.displayDate()
+            }
+            HealthRecordTypes.DIET -> {
+                summary["diet"] = record.title.ifBlank { record.subtitle }
+            }
+            HealthRecordTypes.MOOD -> {
+                summary["mood"] = record.title
+                summary["recentNote"] = record.notes.ifBlank { "Estado de animo actualizado." }
+            }
+            HealthRecordTypes.MEDICATION -> {
+                summary["healthStatus"] = record.title
+            }
+        }
+
+        petsCollection(uid).document(record.petId).set(summary, SetOptions.merge())
     }
 
     fun uploadProfileImage(
@@ -638,6 +757,53 @@ object TadeosFirebaseRepository {
             "recentNote" to recentNote,
             "favorite" to favorite
         )
+    }
+
+    private fun DocumentSnapshot.toHealthRecord(uid: String): HealthRecord? {
+        val title = getString("title").orEmpty()
+        val petId = getString("petId").orEmpty()
+        if (title.isBlank() || petId.isBlank()) {
+            return null
+        }
+
+        return HealthRecord(
+            id = getString("id").orEmpty().ifBlank { id },
+            petId = petId,
+            userId = getString("userId").orEmpty().ifBlank { uid },
+            type = getString("type").orEmpty(),
+            title = title,
+            subtitle = getString("subtitle").orEmpty(),
+            dateMillis = getLong("dateMillis") ?: 0L,
+            time = getString("time").orEmpty(),
+            clinic = getString("clinic").orEmpty(),
+            vet = getString("vet").orEmpty(),
+            notes = getString("notes").orEmpty()
+        )
+    }
+
+    private fun HealthRecord.toFirestoreMap(): Map<String, Any> {
+        return hashMapOf(
+            "id" to id,
+            "petId" to petId,
+            "userId" to userId,
+            "type" to type,
+            "title" to title,
+            "subtitle" to subtitle,
+            "dateMillis" to dateMillis,
+            "time" to time,
+            "clinic" to clinic,
+            "vet" to vet,
+            "notes" to notes
+        )
+    }
+
+    private fun HealthRecord.displayDate(): String {
+        return if (dateMillis > 0L) {
+            java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+                .format(java.util.Date(dateMillis))
+        } else {
+            "Sin fecha"
+        }
     }
 
     private fun friendlyFirebaseMessage(exception: Exception): String {

@@ -22,6 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tadeos.app.data.model.HealthRecord
+import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.PrimaryAction
@@ -48,6 +50,9 @@ fun NewMoodScreen(
     var registerDate by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var petName by remember { mutableStateOf("") }
+    var selectedDateMillis by remember { mutableStateOf(0L) }
+    var isSaving by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
@@ -66,6 +71,7 @@ fun NewMoodScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
+                        selectedDateMillis = millis
                         registerDate = dateFormatter.format(Date(millis))
                     }
                     showDatePicker = false
@@ -135,7 +141,44 @@ fun NewMoodScreen(
             )
         }
 
-        PrimaryAction(text = "Guardar estado", onClick = onSaveClick)
+        if (message != null) {
+            Text(
+                text = message.orEmpty(),
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        PrimaryAction(
+            text = if (isSaving) "Guardando..." else "Guardar estado",
+            onClick = {
+                if (isSaving) return@PrimaryAction
+                if (registerDate.isBlank()) {
+                    message = "Selecciona la fecha del registro."
+                    return@PrimaryAction
+                }
+
+                isSaving = true
+                message = null
+
+                TadeosFirebaseRepository.createHealthRecord(
+                    record = HealthRecord(
+                        petId = petId,
+                        type = HealthRecordTypes.MOOD,
+                        title = selectedMood,
+                        subtitle = "Estado de animo",
+                        dateMillis = selectedDateMillis,
+                        notes = notes.trim()
+                    )
+                ) { success, error ->
+                    isSaving = false
+                    if (success) {
+                        onSaveClick()
+                    } else {
+                        message = error
+                    }
+                }
+            }
+        )
         SecondaryAction(text = "Cancelar", onClick = onBackClick)
     }
 }

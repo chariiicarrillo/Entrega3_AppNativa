@@ -9,6 +9,10 @@ service cloud.firestore {
       match /pets/{petId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      match /healthRecords/{recordId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }

@@ -9,6 +9,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -19,6 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.tadeos.app.data.model.HealthRecord
+import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.PrimaryAction
@@ -47,6 +50,9 @@ fun NewMedicationScreen(
     var frequency by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var petName by remember { mutableStateOf("") }
+    var selectedDateMillis by remember { mutableStateOf(0L) }
+    var isSaving by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
 
     var expandedType by remember { mutableStateOf(false) }
     val typeOptions = listOf("Vacuna", "Pastillas", "Purgante", "Jarabe")
@@ -68,6 +74,7 @@ fun NewMedicationScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
+                        selectedDateMillis = millis
                         startDate = dateFormatter.format(Date(millis))
                     }
                     showDatePicker = false
@@ -157,7 +164,70 @@ fun NewMedicationScreen(
             )
         }
 
-        PrimaryAction(text = "Guardar medicamento", onClick = onSaveClick)
+        if (message != null) {
+            Text(
+                text = message.orEmpty(),
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        PrimaryAction(
+            text = if (isSaving) "Guardando..." else "Guardar medicamento",
+            onClick = {
+                if (isSaving) return@PrimaryAction
+                if (medicationName.isBlank()) {
+                    message = "Ingresa el nombre del medicamento."
+                    return@PrimaryAction
+                }
+                if (medicationType.isBlank()) {
+                    message = "Selecciona el tipo de medicamento."
+                    return@PrimaryAction
+                }
+                if (startDate.isBlank()) {
+                    message = "Selecciona la fecha de inicio."
+                    return@PrimaryAction
+                }
+
+                isSaving = true
+                message = null
+
+                TadeosFirebaseRepository.createHealthRecord(
+                    record = HealthRecord(
+                        petId = petId,
+                        type = medicationType.toHealthRecordType(),
+                        title = medicationName.trim(),
+                        subtitle = medicationType.trim(),
+                        dateMillis = selectedDateMillis,
+                        notes = buildMedicationNotes(frequency = frequency, notes = notes)
+                    )
+                ) { success, error ->
+                    isSaving = false
+                    if (success) {
+                        onSaveClick()
+                    } else {
+                        message = error
+                    }
+                }
+            }
+        )
         SecondaryAction(text = "Cancelar", onClick = onBackClick)
     }
+}
+
+private fun String.toHealthRecordType(): String {
+    return when (this) {
+        "Vacuna" -> HealthRecordTypes.VACCINE
+        "Purgante" -> HealthRecordTypes.DEWORMER
+        else -> HealthRecordTypes.MEDICATION
+    }
+}
+
+private fun buildMedicationNotes(
+    frequency: String,
+    notes: String
+): String {
+    return listOf(
+        frequency.takeIf { it.isNotBlank() }?.let { "Frecuencia: $it" },
+        notes.takeIf { it.isNotBlank() }
+    ).filterNotNull().joinToString(separator = "\n")
 }

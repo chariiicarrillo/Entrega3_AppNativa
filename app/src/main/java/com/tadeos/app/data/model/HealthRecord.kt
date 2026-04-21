@@ -15,6 +15,8 @@ data class HealthRecord(
 )
 
 object HealthRecordTypes {
+    const val VACCINE = "vaccine"
+    const val DEWORMER = "dewormer"
     const val EXAM = "exam"
     const val DIET = "diet"
     const val MOOD = "mood"

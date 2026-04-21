@@ -17,6 +17,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,16 +34,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tadeos.app.data.model.HealthRecord
+import com.tadeos.app.data.model.HealthRecordTypes
+import com.tadeos.app.data.repository.TadeosFirebaseRepository
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.ScreenContainer
 import com.tadeos.app.ui.theme.MutedLabel
-
-/**
- * Template de Detalle de Registro. Reusable para vacunas, examenes, dietas,
- * estados de animo y medicamentos. Por ahora muestra datos de ejemplo; cuando
- * exista persistencia de HealthRecord se debe reemplazar la seccion demoData
- * por una lectura de Firestore usando recordId.
- */
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 @Composable
 fun HealthRecordDetailScreen(
     recordId: String,
@@ -48,7 +52,29 @@ fun HealthRecordDetailScreen(
     onHealthClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    val data = demoData(recordId)
+    var record by remember { mutableStateOf<HealthRecord?>(null) }
+    var petName by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf<String?>(null) }
+
+    DisposableEffect(recordId) {
+        val listener = TadeosFirebaseRepository.observeHealthRecord(recordId) { loadedRecord, error ->
+            record = loadedRecord
+            message = error
+        }
+        onDispose { listener?.remove() }
+    }
+
+    DisposableEffect(record?.petId) {
+        val currentPetId = record?.petId.orEmpty()
+        if (currentPetId.isBlank()) {
+            onDispose { }
+        } else {
+            val listener = TadeosFirebaseRepository.observePet(currentPetId) { pet, _ ->
+                petName = pet?.name.orEmpty()
+            }
+            onDispose { listener?.remove() }
+        }
+    }
 
     ScreenContainer(
         title = "Detalle de Registro",
@@ -58,23 +84,45 @@ fun HealthRecordDetailScreen(
         onHealthClick = onHealthClick,
         onProfileClick = onProfileClick
     ) {
-        HeroCard(data = data)
+        val data = record?.toHealthRecordData(petName = petName)
 
-        SectionEyebrow(text = "ATENCION PROFESIONAL")
-        ProfessionalCard(clinic = data.clinic, vet = data.vet)
+        if (data == null) {
+            EmptyDetailCard(text = message ?: "Cargando registro de salud...")
+        } else {
+            HeroCard(data = data)
 
-        SectionEyebrow(text = "OBSERVACIONES MEDICAS")
-        NotesCard(notes = data.notes)
+            SectionEyebrow(text = "ATENCION PROFESIONAL")
+            ProfessionalCard(clinic = data.clinic, vet = data.vet)
 
-        SectionEyebrow(text = "DOCUMENTACION")
-        DocumentCard(
-            documentName = data.documentName,
-            documentSize = data.documentSize
-        )
+            SectionEyebrow(text = "OBSERVACIONES MEDICAS")
+            NotesCard(notes = data.notes)
+
+            SectionEyebrow(text = "DOCUMENTACION")
+            DocumentCard(
+                documentName = data.documentName,
+                documentSize = data.documentSize
+            )
+        }
     }
 }
 
 // ----- Sections -----
+
+@Composable
+private fun EmptyDetailCard(text: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(24.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
 
 @Composable
 private fun HeroCard(data: HealthRecordData) {
@@ -514,7 +562,7 @@ private fun DownloadIcon(color: Color) {
     }
 }
 
-// ----- Demo data -----
+// ----- Data mapping -----
 
 private data class HealthRecordData(
     val recordType: HealthRecordType,
@@ -529,17 +577,37 @@ private data class HealthRecordData(
     val documentSize: String
 )
 
-private fun demoData(recordId: String): HealthRecordData {
+private fun HealthRecord.toHealthRecordData(petName: String): HealthRecordData {
     return HealthRecordData(
-        recordType = HealthRecordType.Vaccine,
-        title = "Vacuna Triple Viral",
-        petName = "Otto",
-        date = "15 de Octubre, 2026",
-        time = "10:30 AM",
-        clinic = "Veterinaria San Francisco",
-        vet = "Dr. Alejandro Gomez",
-        notes = "El paciente se encuentra en buen estado, se aplico el refuerzo anual sin complicaciones. Se recomienda observacion por 24 horas.",
-        documentName = "Certificado de Vacunacion",
-        documentSize = "PDF • 1.2 MB"
+        recordType = type.toHealthRecordType(),
+        title = title,
+        petName = petName.ifBlank { "Mascota" },
+        date = displayDate(),
+        time = time.ifBlank { "Sin hora registrada" },
+        clinic = clinic.ifBlank { "Sin clinica registrada" },
+        vet = vet.ifBlank { "Sin veterinario asignado" },
+        notes = notes.ifBlank { "Sin observaciones adicionales." },
+        documentName = "Registro guardado en Firebase",
+        documentSize = "Historial interno"
     )
+}
+
+private fun String.toHealthRecordType(): HealthRecordType {
+    return when (this) {
+        HealthRecordTypes.VACCINE -> HealthRecordType.Vaccine
+        HealthRecordTypes.DEWORMER -> HealthRecordType.Dewormer
+        HealthRecordTypes.EXAM -> HealthRecordType.Exam
+        HealthRecordTypes.DIET -> HealthRecordType.Diet
+        HealthRecordTypes.MOOD -> HealthRecordType.Mood
+        HealthRecordTypes.MEDICATION -> HealthRecordType.Medication
+        else -> HealthRecordType.Exam
+    }
+}
+
+private fun HealthRecord.displayDate(): String {
+    return if (dateMillis > 0L) {
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(dateMillis))
+    } else {
+        "Sin fecha registrada"
+    }
 }

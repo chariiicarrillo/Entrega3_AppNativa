@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -16,6 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.tadeos.app.data.model.HealthRecord
+import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.PrimaryAction
@@ -43,6 +46,9 @@ fun NewExamScreen(
     var vetName by remember { mutableStateOf("") }
     var observations by remember { mutableStateOf("") }
     var petName by remember { mutableStateOf("") }
+    var selectedDateMillis by remember { mutableStateOf(0L) }
+    var isSaving by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
@@ -61,6 +67,7 @@ fun NewExamScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
+                        selectedDateMillis = millis
                         examDate = dateFormatter.format(Date(millis))
                     }
                     showDatePicker = false
@@ -119,7 +126,50 @@ fun NewExamScreen(
             )
         }
 
-        PrimaryAction(text = "Guardar examen", onClick = onSaveClick)
+        if (message != null) {
+            Text(
+                text = message.orEmpty(),
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        PrimaryAction(
+            text = if (isSaving) "Guardando..." else "Guardar examen",
+            onClick = {
+                if (isSaving) return@PrimaryAction
+                if (examName.isBlank()) {
+                    message = "Ingresa el nombre del examen."
+                    return@PrimaryAction
+                }
+                if (examDate.isBlank()) {
+                    message = "Selecciona la fecha del examen."
+                    return@PrimaryAction
+                }
+
+                isSaving = true
+                message = null
+
+                TadeosFirebaseRepository.createHealthRecord(
+                    record = HealthRecord(
+                        petId = petId,
+                        type = HealthRecordTypes.EXAM,
+                        title = examName.trim(),
+                        subtitle = "Examen medico",
+                        dateMillis = selectedDateMillis,
+                        clinic = vetName.trim(),
+                        vet = vetName.trim(),
+                        notes = observations.trim()
+                    )
+                ) { success, error ->
+                    isSaving = false
+                    if (success) {
+                        onSaveClick()
+                    } else {
+                        message = error
+                    }
+                }
+            }
+        )
         SecondaryAction(text = "Cancelar", onClick = onBackClick)
     }
 }

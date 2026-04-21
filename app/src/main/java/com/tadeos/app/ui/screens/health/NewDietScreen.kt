@@ -6,6 +6,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -15,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import com.tadeos.app.data.model.HealthRecord
+import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.PrimaryAction
@@ -39,6 +42,8 @@ fun NewDietScreen(
     var quantity by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var petName by remember { mutableStateOf("") }
+    var isSaving by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
 
     val foodOptions = listOf("Concentrado", "BARF", "Comida en casa", "Otro")
     var expandedFood by remember { mutableStateOf(false) }
@@ -140,7 +145,58 @@ fun NewDietScreen(
             )
         }
 
-        PrimaryAction(text = "Guardar dieta", onClick = onSaveClick)
+        if (message != null) {
+            Text(
+                text = message.orEmpty(),
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        PrimaryAction(
+            text = if (isSaving) "Guardando..." else "Guardar dieta",
+            onClick = {
+                if (isSaving) return@PrimaryAction
+                if (foodType.isBlank()) {
+                    message = "Selecciona el tipo de alimento."
+                    return@PrimaryAction
+                }
+                if (frequency.isBlank()) {
+                    message = "Selecciona la frecuencia."
+                    return@PrimaryAction
+                }
+
+                isSaving = true
+                message = null
+
+                TadeosFirebaseRepository.createHealthRecord(
+                    record = HealthRecord(
+                        petId = petId,
+                        type = HealthRecordTypes.DIET,
+                        title = foodType.trim(),
+                        subtitle = frequency.trim(),
+                        dateMillis = System.currentTimeMillis(),
+                        notes = buildDietNotes(quantity = quantity, notes = notes)
+                    )
+                ) { success, error ->
+                    isSaving = false
+                    if (success) {
+                        onSaveClick()
+                    } else {
+                        message = error
+                    }
+                }
+            }
+        )
         SecondaryAction(text = "Cancelar", onClick = onBackClick)
     }
+}
+
+private fun buildDietNotes(
+    quantity: String,
+    notes: String
+): String {
+    return listOf(
+        quantity.takeIf { it.isNotBlank() }?.let { "Cantidad: $it gr" },
+        notes.takeIf { it.isNotBlank() }
+    ).filterNotNull().joinToString(separator = "\n")
 }

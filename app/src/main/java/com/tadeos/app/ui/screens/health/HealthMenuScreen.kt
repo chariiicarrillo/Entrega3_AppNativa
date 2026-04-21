@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tadeos.app.data.model.HealthRecord
+import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.model.Pet
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
 import com.tadeos.app.navigation.AppRoutes
@@ -48,6 +50,9 @@ import com.tadeos.app.ui.theme.ChipWarningText
 import com.tadeos.app.ui.theme.DarkEarth
 import com.tadeos.app.ui.theme.MutedLabel
 import com.tadeos.app.ui.theme.StatusCardBg
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun HealthMenuScreen(
@@ -63,13 +68,27 @@ fun HealthMenuScreen(
     onProfileClick: () -> Unit
 ) {
     var pet by remember { mutableStateOf<Pet?>(null) }
+    var records by remember { mutableStateOf<List<HealthRecord>>(emptyList()) }
+    var recordsMessage by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(petId) {
-        val listener = TadeosFirebaseRepository.observePet(petId) { loaded, _ ->
+        val petListener = TadeosFirebaseRepository.observePet(petId) { loaded, _ ->
             pet = loaded
         }
-        onDispose { listener?.remove() }
+        val recordListener = TadeosFirebaseRepository.observeHealthRecords(petId) { loadedRecords, message ->
+            records = loadedRecords
+            recordsMessage = message
+        }
+
+        onDispose {
+            petListener?.remove()
+            recordListener?.remove()
+        }
     }
+
+    val vaccineRecord = records.firstOrNull { record -> record.type == HealthRecordTypes.VACCINE }
+    val dewormerRecord = records.firstOrNull { record -> record.type == HealthRecordTypes.DEWORMER }
+    val examRecord = records.firstOrNull { record -> record.type == HealthRecordTypes.EXAM }
 
     ScreenContainer(
         title = "Control de Salud",
@@ -83,42 +102,42 @@ fun HealthMenuScreen(
         StatusCard(
             title = "Vacunas",
             accentColor = MaterialTheme.colorScheme.primary,
-            chipText = pet?.vaccines?.takeIf { it.isNotBlank() && it != "Pendiente" }?.let { "Al dia" } ?: "Sin registros",
-            chipIsWarning = pet?.vaccines.isNullOrBlank() || pet?.vaccines == "Pendiente",
+            chipText = if (vaccineRecord == null) "Sin registros" else "Registrado",
+            chipIsWarning = vaccineRecord == null,
             leftLabel = "ULTIMA",
-            leftValue = "Sin registro",
-            leftDetail = "",
-            rightLabel = "PROXIMA",
+            leftValue = vaccineRecord?.displayDate().orEmpty().ifBlank { "Sin registro" },
+            leftDetail = vaccineRecord?.title.orEmpty(),
+            rightLabel = "ESTADO",
             rightValue = pet?.vaccines?.takeIf { it.isNotBlank() } ?: "Por programar",
-            rightDetail = "Refuerzo anual",
+            rightDetail = vaccineRecord?.subtitle.orEmpty(),
             icon = { VaccineIcon(MaterialTheme.colorScheme.onPrimary) }
         )
 
         StatusCard(
             title = "Purgante",
             accentColor = MaterialTheme.colorScheme.secondary,
-            chipText = if ((pet?.nextCare.orEmpty()).isBlank()) "Sin registros" else "Vence pronto",
-            chipIsWarning = true,
+            chipText = if (dewormerRecord == null) "Sin registros" else "Registrado",
+            chipIsWarning = dewormerRecord == null,
             leftLabel = "ULTIMA",
-            leftValue = "Sin registro",
-            leftDetail = "",
-            rightLabel = "PROXIMA",
+            leftValue = dewormerRecord?.displayDate().orEmpty().ifBlank { "Sin registro" },
+            leftDetail = dewormerRecord?.title.orEmpty(),
+            rightLabel = "ESTADO",
             rightValue = pet?.nextCare?.takeIf { it.isNotBlank() } ?: "Por programar",
-            rightDetail = "Refuerzo",
+            rightDetail = dewormerRecord?.subtitle.orEmpty(),
             icon = { DewormerIcon(MaterialTheme.colorScheme.onPrimary) }
         )
 
         StatusCard(
             title = "Examenes",
             accentColor = DarkEarth,
-            chipText = if ((pet?.nextExam.orEmpty()).isBlank() || pet?.nextExam == "Por programar") "Sin registros" else "Al dia",
-            chipIsWarning = pet?.nextExam.orEmpty().isBlank() || pet?.nextExam == "Por programar",
+            chipText = if (examRecord == null) "Sin registros" else "Al dia",
+            chipIsWarning = examRecord == null,
             leftLabel = "ULTIMO",
-            leftValue = "Sin registro",
-            leftDetail = "",
-            rightLabel = "PROXIMO",
+            leftValue = examRecord?.displayDate().orEmpty().ifBlank { "Sin registro" },
+            leftDetail = examRecord?.title.orEmpty(),
+            rightLabel = "RESUMEN",
             rightValue = pet?.nextExam?.takeIf { it.isNotBlank() } ?: "Por programar",
-            rightDetail = "Chequeo general",
+            rightDetail = examRecord?.subtitle.orEmpty(),
             icon = { ExamIcon(Color.White) }
         )
 
@@ -186,13 +205,43 @@ fun HealthMenuScreen(
             )
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                HistoryRow(
-                    title = "Vacuna Triple Viral",
-                    subtitle = "Plantilla demo \u00b7 Toca para ver detalle",
-                    onClick = { onHistoryItemClick("demo") }
-                )
+                if (records.isEmpty()) {
+                    HistoryRow(
+                        title = recordsMessage ?: "Aun no hay registros",
+                        subtitle = "Crea un medicamento, examen, dieta o estado de animo",
+                        onClick = {}
+                    )
+                } else {
+                    records.take(8).forEach { record ->
+                        HistoryRow(
+                            title = record.title,
+                            subtitle = "${record.typeLabel()} \u00b7 ${record.displayDate()}",
+                            onClick = { onHistoryItemClick(record.id) }
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+private fun HealthRecord.displayDate(): String {
+    return if (dateMillis > 0L) {
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(dateMillis))
+    } else {
+        "Sin fecha"
+    }
+}
+
+private fun HealthRecord.typeLabel(): String {
+    return when (type) {
+        HealthRecordTypes.VACCINE -> "Vacuna"
+        HealthRecordTypes.DEWORMER -> "Purgante"
+        HealthRecordTypes.EXAM -> "Examen"
+        HealthRecordTypes.DIET -> "Dieta"
+        HealthRecordTypes.MOOD -> "Estado"
+        HealthRecordTypes.MEDICATION -> "Medicamento"
+        else -> "Registro"
     }
 }
 
