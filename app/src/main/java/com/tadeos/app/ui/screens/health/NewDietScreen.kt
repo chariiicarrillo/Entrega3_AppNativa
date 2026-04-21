@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.tadeos.app.data.model.HealthRecord
 import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
+import com.tadeos.app.data.validation.HealthRecordValidator
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.PrimaryAction
 import com.tadeos.app.ui.components.ScreenContainer
@@ -164,6 +165,19 @@ fun NewDietScreen(
                     message = "Selecciona la frecuencia."
                     return@PrimaryAction
                 }
+                val recordDateMillis = System.currentTimeMillis()
+                HealthRecordValidator.validate(
+                    HealthRecord(
+                        petId = petId,
+                        type = HealthRecordTypes.DIET,
+                        title = foodType.trim(),
+                        subtitle = frequency.trim(),
+                        dateMillis = recordDateMillis
+                    )
+                )?.let { validationMessage ->
+                    message = validationMessage
+                    return@PrimaryAction
+                }
 
                 isSaving = true
                 message = null
@@ -174,7 +188,7 @@ fun NewDietScreen(
                         type = HealthRecordTypes.DIET,
                         title = foodType.trim(),
                         subtitle = frequency.trim(),
-                        dateMillis = System.currentTimeMillis(),
+                        dateMillis = recordDateMillis,
                         notes = buildDietNotes(quantity = quantity, notes = notes)
                     )
                 ) { success, error ->

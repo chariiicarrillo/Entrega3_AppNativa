@@ -7,6 +7,7 @@ import com.tadeos.app.data.model.HealthRecord
 import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.model.Pet
 import com.tadeos.app.data.model.UserProfile
+import com.tadeos.app.data.validation.HealthRecordValidator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.DocumentSnapshot
@@ -315,6 +316,11 @@ object TadeosFirebaseRepository {
         }
         if (record.petId.isBlank()) {
             onComplete(false, "Selecciona una mascota para guardar el registro.")
+            return
+        }
+        val validationMessage = HealthRecordValidator.validate(record)
+        if (validationMessage != null) {
+            onComplete(false, validationMessage)
             return
         }
 
@@ -773,7 +779,9 @@ object TadeosFirebaseRepository {
             type = getString("type").orEmpty(),
             title = title,
             subtitle = getString("subtitle").orEmpty(),
-            dateMillis = getLong("dateMillis") ?: 0L,
+            dateMillis = getLong("dateMillis")
+                ?: getTimestamp("recordDate")?.toDate()?.time
+                ?: 0L,
             time = getString("time").orEmpty(),
             clinic = getString("clinic").orEmpty(),
             vet = getString("vet").orEmpty(),
@@ -790,6 +798,7 @@ object TadeosFirebaseRepository {
             "title" to title,
             "subtitle" to subtitle,
             "dateMillis" to dateMillis,
+            "recordDate" to java.util.Date(dateMillis),
             "time" to time,
             "clinic" to clinic,
             "vet" to vet,

@@ -2,16 +2,54 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isValidHealthRecord(userId, recordId) {
+      return request.resource.data.id == recordId
+        && request.resource.data.userId == userId
+        && request.resource.data.petId is string
+        && request.resource.data.petId.size() > 0
+        && request.resource.data.type in [
+          'vaccine',
+          'dewormer',
+          'exam',
+          'diet',
+          'mood',
+          'medication'
+        ]
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.subtitle is string
+        && request.resource.data.subtitle.size() <= 120
+        && request.resource.data.dateMillis is int
+        && request.resource.data.dateMillis > 0
+        && request.resource.data.recordDate is timestamp
+        && request.resource.data.recordDate <= request.time
+        && request.resource.data.time is string
+        && request.resource.data.time.size() <= 120
+        && request.resource.data.clinic is string
+        && request.resource.data.clinic.size() <= 120
+        && request.resource.data.vet is string
+        && request.resource.data.vet.size() <= 120
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 600;
+    }
+
     match /users/{userId} {
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if isOwner(userId);
+      allow read, update, delete: if isOwner(userId);
 
       match /pets/{petId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
 
       match /healthRecords/{recordId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && isValidHealthRecord(userId, recordId);
       }
     }
   }

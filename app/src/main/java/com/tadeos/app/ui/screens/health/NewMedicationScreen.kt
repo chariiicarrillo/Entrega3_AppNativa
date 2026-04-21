@@ -23,15 +23,13 @@ import androidx.compose.ui.Modifier
 import com.tadeos.app.data.model.HealthRecord
 import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
+import com.tadeos.app.data.validation.HealthRecordValidator
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.PrimaryAction
 import com.tadeos.app.ui.components.ScreenContainer
 import com.tadeos.app.ui.components.SecondaryAction
 import com.tadeos.app.ui.components.TadeosCard
 import com.tadeos.app.ui.components.TadeosTextField
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,8 +56,9 @@ fun NewMedicationScreen(
     val typeOptions = listOf("Vacuna", "Pastillas", "Purgante", "Jarabe")
 
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val datePickerState = rememberDatePickerState(
+        selectableDates = PastOrTodaySelectableDates()
+    )
 
     DisposableEffect(petId) {
         val listener = TadeosFirebaseRepository.observePet(petId) { pet, _ ->
@@ -74,8 +73,8 @@ fun NewMedicationScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        selectedDateMillis = millis
-                        startDate = dateFormatter.format(Date(millis))
+                        selectedDateMillis = HealthRecordValidator.fromDatePickerUtcMillis(millis)
+                        startDate = HealthRecordValidator.formatDate(selectedDateMillis)
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -185,6 +184,17 @@ fun NewMedicationScreen(
                 }
                 if (startDate.isBlank()) {
                     message = "Selecciona la fecha de inicio."
+                    return@PrimaryAction
+                }
+                HealthRecordValidator.validate(
+                    HealthRecord(
+                        petId = petId,
+                        type = medicationType.toHealthRecordType(),
+                        title = medicationName.trim(),
+                        dateMillis = selectedDateMillis
+                    )
+                )?.let { validationMessage ->
+                    message = validationMessage
                     return@PrimaryAction
                 }
 

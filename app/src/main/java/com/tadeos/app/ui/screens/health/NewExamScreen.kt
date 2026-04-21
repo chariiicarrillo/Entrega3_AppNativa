@@ -20,15 +20,13 @@ import androidx.compose.ui.Modifier
 import com.tadeos.app.data.model.HealthRecord
 import com.tadeos.app.data.model.HealthRecordTypes
 import com.tadeos.app.data.repository.TadeosFirebaseRepository
+import com.tadeos.app.data.validation.HealthRecordValidator
 import com.tadeos.app.navigation.AppRoutes
 import com.tadeos.app.ui.components.PrimaryAction
 import com.tadeos.app.ui.components.ScreenContainer
 import com.tadeos.app.ui.components.SecondaryAction
 import com.tadeos.app.ui.components.TadeosCard
 import com.tadeos.app.ui.components.TadeosTextField
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,8 +49,9 @@ fun NewExamScreen(
     var message by remember { mutableStateOf<String?>(null) }
 
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val datePickerState = rememberDatePickerState(
+        selectableDates = PastOrTodaySelectableDates()
+    )
 
     DisposableEffect(petId) {
         val listener = TadeosFirebaseRepository.observePet(petId) { pet, _ ->
@@ -67,8 +66,8 @@ fun NewExamScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        selectedDateMillis = millis
-                        examDate = dateFormatter.format(Date(millis))
+                        selectedDateMillis = HealthRecordValidator.fromDatePickerUtcMillis(millis)
+                        examDate = HealthRecordValidator.formatDate(selectedDateMillis)
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -143,6 +142,17 @@ fun NewExamScreen(
                 }
                 if (examDate.isBlank()) {
                     message = "Selecciona la fecha del examen."
+                    return@PrimaryAction
+                }
+                HealthRecordValidator.validate(
+                    HealthRecord(
+                        petId = petId,
+                        type = HealthRecordTypes.EXAM,
+                        title = examName.trim(),
+                        dateMillis = selectedDateMillis
+                    )
+                )?.let { validationMessage ->
+                    message = validationMessage
                     return@PrimaryAction
                 }
 
