@@ -29,8 +29,18 @@ val facebookClientToken = localOrGradleProperty(
     fallback = "REEMPLAZA_FACEBOOK_CLIENT_TOKEN"
 )
 
+val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE")?.trim()
+val releaseStorePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")?.trim()
+val releaseKeyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")?.trim()
+val releaseKeyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")?.trim()
+val hasReleaseSigning = !releaseStoreFile.isNullOrBlank() &&
+    !releaseStorePassword.isNullOrBlank() &&
+    !releaseKeyAlias.isNullOrBlank() &&
+    !releaseKeyPassword.isNullOrBlank() &&
+    file(releaseStoreFile!!).exists()
+
 android {
-    namespace = "com.example.tadeos"
+    namespace = "com.tadeos.app"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -38,7 +48,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.tadeos"
+        applicationId = "com.tadeos.app"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -51,6 +61,17 @@ android {
         resValue("string", "fb_login_protocol_scheme", "fb$facebookAppId")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -58,6 +79,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -82,7 +106,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
     implementation(libs.androidx.activity.compose)
-
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.ui)
@@ -101,7 +125,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.facebook.login)
-
+    implementation("com.google.firebase:firebase-analytics")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

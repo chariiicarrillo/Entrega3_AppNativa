@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "YOUR_FIREBASE_ANDROID_APP_ID",
         "android_client_info": {
-          "package_name": "com.example.tadeos"
+          "package_name": "com.tadeos.app"
         }
       },
       "oauth_client": [],
